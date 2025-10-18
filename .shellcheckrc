@@ -1,0 +1,7 @@
+# Not following: (error message here)
+# https://github.com/koalaman/shellcheck/wiki/SC1091
+disable=SC1091
+
+# Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+# https://github.com/koalaman/shellcheck/wiki/SC2207
+disable=SC2207

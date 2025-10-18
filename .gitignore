@@ -1,0 +1,38 @@
+# Project property files
+.gradle/
+.history/
+.idea/
+.jfrog/
+.project/
+.sencha/
+.settings/
+# Ignore all VSCode files except extensions.json
+.vscode/*
+!.vscode/extensions.json
+*.bat
+*.iml
+*.rest
+build.gradle
+setup.env.*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Project generated files
+node_modules/
+build/
+dist/
+output/
+*.log
+*.tar
+*.tgz
+
+# All ".env*" files except ".env.*"
+.env*
+!.env.*
+
+# MegaLinter files
+tmp/
+megalinter-reports/
+*-megalinter_file_names_cspell.txt

@@ -1,0 +1,40 @@
+---
+###########################################
+# These are the rules used for            #
+# linting all the yaml files in the stack #
+# NOTE:                                   #
+# You can disable line with:              #
+# # yamllint disable-line                 #
+###########################################
+
+extends: default
+
+ignore-from-file: .gitignore
+
+rules:
+  braces:
+    forbid: non-empty
+  brackets:
+    forbid: non-empty
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: {}
+  document-end: disable
+  document-start: disable
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  line-length:
+    max: 500
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  new-line-at-end-of-file: enable
+  new-lines:
+    type: unix
+  quoted-strings:
+    quote-type: single
+    required: only-when-needed
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#ports
+    extra-required:
+      - ^\d+:\d+$
+  trailing-spaces: {}

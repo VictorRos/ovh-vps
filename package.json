@@ -1,0 +1,54 @@
+{
+	"name": "ovh-vps",
+	"version": "1.0.0",
+	"description": "Documentation pour la configuration d'un VPS OVH",
+	"main": "index.js",
+	"scripts": {
+		"clean": "rm -rf megalinter-reports",
+		"lint:ansible": "ansible-lint --config-file .ansible-lint.yml --project-dir ansible",
+		"mega-linter": "rm -rf megalinter-reports && npx -y mega-linter-runner@9.1.0 --release v9.1.0 --flavor terraform --remove-container",
+		"prepare": "bash scripts/prepare.sh",
+		"prettier": "prettier --write --config .prettierrc.yaml --ignore-unknown .",
+		"update-dependencies": "npx -y npm-check-updates -i"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:VictorRos/ovh-vps.git"
+	},
+	"keywords": [
+		"Ansible",
+		"Configuration",
+		"OVH",
+		"VPS"
+	],
+	"author": "Victor Ros",
+	"license": "SEE LICENSE IN LICENSE",
+	"lint-staged": {
+		"**/{.*,*}": "prettier --write --config .prettierrc.yaml --ignore-unknown"
+	},
+	"validate-branch-name": {
+		"pattern": "^(master|develop)$|^(feature|bugfix|hotfix|release)/.+$",
+		"errorMsg": "🤨 The branch you try to push does not respect our conventions, you can rename it with `git branch -m <current-name> <new-name>`"
+	},
+	"devDependencies": {
+		"@cspell/dict-bash": "^4.2.1",
+		"@cspell/dict-companies": "^3.2.5",
+		"@cspell/dict-css": "^4.0.18",
+		"@cspell/dict-docker": "^1.1.16",
+		"@cspell/dict-fr-fr": "^2.3.2",
+		"@cspell/dict-git": "^3.0.7",
+		"@cspell/dict-html": "^4.0.12",
+		"@cspell/dict-k8s": "^1.0.12",
+		"@cspell/dict-markdown": "^2.0.12",
+		"@cspell/dict-node": "^5.0.8",
+		"@cspell/dict-npm": "^5.2.17",
+		"@cspell/dict-powershell": "^5.0.15",
+		"@cspell/dict-python": "^4.2.19",
+		"@cspell/dict-software-terms": "^5.1.8",
+		"@cspell/dict-sql": "^2.2.1",
+		"@cspell/dict-typescript": "^3.2.3",
+		"husky": "^9.1.7",
+		"prettier": "^3.6.2",
+		"prettier-plugin-sh": "^0.18.0"
+	}
+}

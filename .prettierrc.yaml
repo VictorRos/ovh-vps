@@ -1,0 +1,40 @@
+# Common rules
+arrowParens: always
+bracketSpacing: false
+jsxSingleQuote: false
+printWidth: 120
+semi: true
+singleQuote: false
+trailingComma: es5
+useTabs: true
+
+overrides:
+  # Bash
+  - files: '*.sh'
+    options:
+      # Parser
+      keepComments: true
+      # Printer
+      indent: 2
+      binaryNextLine: true
+      switchCaseIndent: true
+      spaceRedirects: true
+      keepPadding: true
+      minify: false
+      functionNextLine: false
+  # JSON
+  - files:
+      - '*.json'
+      - '*.jsonc'
+      - '*.json5'
+    options:
+      trailingComma: none
+  # YAML
+  - files:
+      - '*.yml'
+      - '*.yaml'
+    options:
+      useTabs: false
+      tabWidth: 2
+      singleQuote: true
+      endOfLine: lf

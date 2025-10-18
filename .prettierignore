@@ -1,0 +1,23 @@
+# Default
+**/.git
+**/.svn
+**/.hg
+**/node_modules
+
+# Ignore artifacts
+build
+coverage
+dist
+eslint.json
+junit.xml
+test-report.xml
+
+# MegaLinter files
+tmp
+megalinter-reports
+
+# Ignore files
+**/*.js
+**/*.jsx
+**/*.ts
+**/*.tsx

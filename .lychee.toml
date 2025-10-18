@@ -1,0 +1,41 @@
+# Configuration example: https://github.com/lycheeverse/lychee/blob/master/lychee.example.toml
+
+#############################  Display  #############################
+
+# Verbose program output
+# Accepts log level: "error", "warn", "info", "debug", "trace"
+verbose = "info"
+
+# Don't show interactive progress bar while checking links.
+no_progress = false
+
+# Possible values: compact, detailed, json, markdown, raw
+format = "detailed"
+
+#############################  Requests  ############################
+
+# Possible values: http, https, file, and mailto.
+scheme = ["https", "file"]
+
+# Fallback extensions to apply when a URL does not specify one.
+# This is common in documentation tools that cross-reference files without extensions.
+fallback_extensions = ["html", "htm", "php", "asp", "aspx", "jsp", "cgi", "md"]
+
+# Enable the checking of fragments in links.
+include_fragments = true
+
+#############################  Exclusions  ##########################
+
+# Check links inside `<code>` and `<pre>` blocks as well as Markdown code
+# blocks.
+include_verbatim = true
+
+# Exclude URLs and mail addresses from checking. The values are treated as regular expressions
+exclude = [
+	"^https://[^.]+\\.blob\\.core\\.windows\\.net",   # Azure Storage Accounts
+	"^https://[^.]+\\.(apps|live)\\.dynatrace\\.com", # Dynatrace
+	"^https://[^.]+\\.vault\\.azure\\.net",           # Azure Key Vaults
+	"^https://cegid\\.visualstudio\\.com",            # Azure DevOps (must be authenticated)
+	"^https://dev\\.azure\\.com",                     # Azure DevOps (must be authenticated)
+	"^https://portal\\.azure\\.com",                  # Azure Portal (must be authenticated)
+]

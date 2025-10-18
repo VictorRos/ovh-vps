@@ -1,0 +1,83 @@
+# Configuration file for Mega-Linter
+# See all available variables at https://megalinter.io/latest/config-file/ and in linters documentation
+
+# General
+DEFAULT_BRANCH: master
+ADDITIONAL_EXCLUDED_DIRECTORIES:
+  - coverage
+IGNORE_GITIGNORED_FILES: true
+LOG_LEVEL: INFO
+PRINT_ALPACA: false
+SHOW_ELAPSED_TIME: true
+
+# Configuration
+APPLY_FIXES:
+  - BASH_SHFMT
+  - CSS_STYLELINT
+  - JSON_ESLINT_PLUGIN_JSONC
+  - JSON_PRETTIER
+  - MARKDOWN_MARKDOWNLINT
+  - YAML_PRETTIER
+DISABLE_LINTERS:
+  # Conflicts against ESLint
+  - JAVASCRIPT_STANDARD
+  # Validate JSON with JSON schemas (performance issues + false positives)
+  - JSON_V8R
+  # Conflicts against prettier
+  - MARKDOWN_MARKDOWN_TABLE_FORMATTER
+  # Checkov (false positives)
+  - REPOSITORY_CHECKOV
+  # Note: New starting 7.2.x - Similar to checkov
+  - REPOSITORY_GRYPE
+  # Note: New starting 7.2.x - Similar to gitleaks (stuck pipeline infinite loop)
+  - REPOSITORY_TRUFFLEHOG
+  # Should we write like William Shakespeare?
+  - SPELL_PROSELINT
+  # No Switft language
+  - SWIFT_SWIFTLINT
+  # Conflicts against ESLint
+  - TYPESCRIPT_STANDARD
+  # Validate YAML with JSON (performance issues + false positives)
+  - YAML_V8R
+DISABLE:
+  - SQL
+
+# BASH
+BASH_SHFMT_ARGUMENTS: -i 2 -sr -ci -bn
+
+# CSS
+# Linter stylelint for CSS files; Linter scss-lint for SCSS files
+CSS_STYLELINT_FILE_EXTENSIONS:
+  - .css
+
+# JSON - ESLINT PLUGIN JSONC
+JSON_ESLINT_PLUGIN_JSONC_CONFIG_FILE: .eslintrc.mega-linter.json
+
+# JSON_PRETTIER
+JSON_PRETTIER_CONFIG_FILE: .prettierrc.yaml
+
+# JS, JSX, TS, TSX
+# --> Trick to add these files in other MegaLinter linters, like CSPELL, but not triggering following linters.
+#     Because ESLint is run outside MegaLinter.
+JAVASCRIPT_ES_ARGUMENTS: --version
+JSX_ESLINT_ARGUMENTS: --version
+TSX_ESLINT_ARGUMENTS: --version
+TYPESCRIPT_ES_ARGUMENTS: --version
+
+# SPELL
+SPELL_CSPELL_ARGUMENTS: --dot --gitignore
+SPELL_LYCHEE_CONFIG_FILE: .lychee.toml
+SPELL_LYCHEE_FILTER_REGEX_EXCLUDE: (package-lock\.json$)
+
+# REPOSITORY_GITLEAKS
+REPOSITORY_GITLEAKS_ARGUMENTS: --no-git
+
+# REPOSITORY_SECRETLINT
+REPOSITORY_SECRETLINT_ARGUMENTS: --secretlintignore .gitignore
+
+# REPOSITORY_TRIVY
+REPOSITORY_TRIVY_ARGUMENTS: --cache-dir /tmp/lint/tmp/.trivy/
+REPOSITORY_TRIVY_CONFIG_FILE: .trivy.yaml
+
+# YAML_PRETTIER
+YAML_PRETTIER_CONFIG_FILE: .prettierrc.yaml
