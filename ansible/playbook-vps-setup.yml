@@ -1,0 +1,194 @@
+---
+# Prérequis : Installer les collections requises
+# ansible-galaxy collection install -r requirements.yml
+#
+# Commande pour exécuter le playbook
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml
+#
+# Simulation complète sans modifications
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --check
+#
+# Avec plus de détails sur ce qui serait changé
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --check --diff
+#
+# === EXÉCUTION PARTIELLE ===
+# Tags disponibles : system, security, updates, packages, config, firewall, fail2ban, tuning, cleanup
+#
+# Exécuter seulement les tâches système (mise à jour + packages + config + tuning + cleanup) :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --tags "system"
+#
+# Exécuter seulement la sécurité (firewall + fail2ban) :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --tags "security"
+#
+# Exécuter jusqu'aux packages (exclut sécurité) :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --tags "system" --skip-tags "cleanup"
+#
+# Lister toutes les tâches avec leurs tags :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --list-tags
+#
+- name: Configuration du VPS
+  hosts: vps
+  become: true
+  vars:
+    # Variables communes pour le VPS
+    admin_user: '{{ ansible_user }}'
+    ssh_port: '{{ ansible_port }}'
+    timezone: Europe/Paris
+
+  tasks:
+    - name: Mise à jour du cache des paquets
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+      tags:
+        - system
+        - updates
+
+    - name: Mise à jour complète du système
+      ansible.builtin.apt:
+        upgrade: dist
+      when: ansible_os_family == 'Debian'
+      tags:
+        - system
+        - updates
+
+    - name: Installation des outils essentiels
+      ansible.builtin.apt:
+        name:
+          - build-essential # Compilateurs C/C++, make, libc-dev (essentiel)
+          - ca-certificates # Certificats SSL/TLS (crucial pour HTTPS)
+          - cron # Planificateur de tâches
+          - curl # Outil de transfert de données
+          - fail2ban # Protection contre les intrusions (brute-force)
+          - git # Système de contrôle de version
+          - gnupg # Gestion des clés GPG (pour dépôts sécurisés)
+          - htop # Moniteur système interactif
+          - libssl-dev # Développement SSL (pour compilation Python, etc.)
+          - lsb-release # Informations sur la distribution
+          - make # Outil de build (souvent nécessaire)
+          - nano # Éditeur de texte simple en ligne de commande
+          - rsync # Outil de synchronisation de fichiers
+          - screen # Multiplexeur de terminal
+          - tmux # Multiplexeur de terminal
+          - tree # Affichage en arbre des répertoires
+          - ufw # Pare-feu Uncomplicated
+          - unzip # Décompression de fichiers ZIP
+          - vim # Éditeur de texte avancé
+          - wget # Outil de téléchargement
+          - xz-utils # Compression XZ (formats .tar.xz courants)
+          - zlib1g-dev # Compression zlib (pour compilations)
+        state: present
+      when: ansible_os_family == 'Debian'
+      tags:
+        - system
+        - packages
+
+    - name: Configuration du fuseau horaire
+      community.general.timezone:
+        name: '{{ timezone }}'
+      tags:
+        - system
+        - config
+
+    - name: Configuration de base du pare-feu UFW
+      community.general.ufw:
+        rule: allow
+        port: '{{ ssh_port }}'
+        proto: tcp
+      tags:
+        - security
+        - firewall
+
+    - name: Activation du pare-feu UFW
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+      tags:
+        - security
+        - firewall
+
+    - name: Configuration de Fail2Ban pour SSH
+      ansible.builtin.copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [DEFAULT]
+            bantime = 3600
+            findtime = 600
+            maxretry = 3
+
+          [sshd]
+            enabled = true
+            port = {{ ssh_port }}
+        mode: '0644'
+      notify: Restart fail2ban
+      tags:
+        - security
+        - fail2ban
+
+    - name: Configuration des limites système
+      community.general.pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nofile
+        value: '65536'
+      tags:
+        - system
+        - tuning
+
+    - name: Nettoyage des paquets inutiles
+      ansible.builtin.apt:
+        autoremove: true
+        autoclean: true
+      when: ansible_os_family == 'Debian'
+      tags:
+        - system
+        - cleanup
+
+    - name: Ajout des alias utiles dans .bashrc
+      ansible.builtin.blockinfile:
+        path: '{{ item.path }}'
+        owner: '{{ item.owner }}'
+        group: '{{ item.group }}'
+        mode: '0644'
+        create: true
+        block: |
+          # Grep with colors
+          export GREP_COLOR='mt=31'
+          alias grep='grep --color=auto'
+
+          ## Shell
+          alias ll='ls -hal'
+          alias la='ls -A'
+          alias lh='ls -ah'
+          alias l='ls -CF'
+          alias lll='ls -lh | less'
+          alias llt='ls -altF'
+          alias sh-755='find -name "*.sh" | xargs chmod 755'
+          alias uuid='uuidgen | tr "[:upper:]" "[:lower:]"'
+
+          ## NPM
+          alias nr='npm run'
+          alias nru='npm run update-dependencies'
+        marker: '# {mark} ANSIBLE MANAGED BLOCK - General Aliases'
+      loop:
+        - path: /root/.bashrc
+          owner: root
+          group: root
+        - path: /home/{{ admin_user }}/.bashrc
+          owner: '{{ admin_user }}'
+          group: '{{ admin_user }}'
+      tags:
+        - config
+
+  handlers:
+    - name: Restart fail2ban
+      ansible.builtin.service:
+        name: fail2ban
+        state: restarted
+
+    - name: Restart ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

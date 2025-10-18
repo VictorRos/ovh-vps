@@ -32,6 +32,9 @@ output/
 .env*
 !.env.*
 
+# Ansible sensitive variables
+ansible/vars/production.yml
+
 # MegaLinter files
 tmp/
 megalinter-reports/

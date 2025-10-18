@@ -5,6 +5,11 @@
   - [Connexion en SSH](#connexion-en-ssh)
   - [Mise à jour initiale](#mise-à-jour-initiale)
 - [Configuration du VPS](#configuration-du-vps)
+  - [Variables Ansible du VPS](#variables-ansible-du-vps)
+- [Vintage Story](#vintage-story)
+  - [Installation](#installation)
+  - [Service Management](#service-management)
+  - [Désinstallation](#désinstallation)
 
 ## Premières étapes
 
@@ -94,7 +99,58 @@ Suivre cet article [Comment créer et utiliser des clés d'authentification pour
 
 ## Configuration du VPS
 
-TODO
+```shell
+# Installer les collections Ansible nécessaires
+ansible-galaxy collection install -r ansible/requirements.yml
+
+# Lancer le playbook de configuration du VPS
+ansible-playbook -i ansible/inventory.ini ansible/playbook-vps-setup.yml
+```
+
+### Variables Ansible du VPS
+
+Fichier : `ansible/vars/production.yml`
+
+```shell
+# Variables d'environnement pour le développement/test
+
+# Configuration du serveur VPS
+vps_ip: X.X.X.X # IP publique du serveur
+vps_ssh_port: YYYY # Port SSH par défaut
+
+```
+
+## Vintage Story
+
+### Installation
+
+```shell
+# Lancer le playbook d'installation de Vintage Story
+ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml
+```
+
+### Service Management
+
+```shell
+# Démarrer le serveur Vintage Story
+sudo systemctl start vintage-story
+
+# Arrêter le serveur Vintage Story
+sudo systemctl stop vintage-story
+
+# Redémarrer le serveur Vintage Story
+sudo systemctl restart vintage-story
+
+# Vérifier le statut du serveur Vintage Story
+sudo systemctl status vintage-story
+```
+
+### Désinstallation
+
+```shell
+# Lancer le playbook de désinstallation de Vintage Story
+ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml
+```
 
 <!-- Links -->
 

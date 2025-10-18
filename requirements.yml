@@ -1,0 +1,7 @@
+---
+# Collections Ansible requises pour les playbooks
+collections:
+  - name: community.general
+    # https://galaxy.ansible.com/ui/repo/published/community/general/
+    version: 11.4.0
+    source: https://galaxy.ansible.com
