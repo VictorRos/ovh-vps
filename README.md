@@ -19,7 +19,11 @@ Suivre la première vidéo de cet article [Premiers pas avec un VPS].
 
    ```shell
    sudo vim /etc/ssh/sshd_config
-   # Choisir un port entre 49152 et 65535
+   # Modifier "ClientAliveInterval" 120 par 300 - Ping toutes les 5 minutes
+   # Modifier "ClientAliveCountMax" 3 par 2 - Ferme après 2 pings sans réponse (soit 10 minutes)
+   # Modifier "LoginGraceTime" 2m par 30 - Temps pour se connecter avant déconnexion
+   # Modifier "MaxAuthTries" 6 par 3 - Nombre de tentatives de connexion avant déconnexion
+   # Modifier "Port" 22 par un port entre 49152 et 65535 - Port SSH personnalisé (plus sécurisé)
    ```
 
 5. Redémarrage du VPS pour qu'il tienne compte du changement du nouveau port
