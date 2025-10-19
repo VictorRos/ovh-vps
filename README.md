@@ -3,10 +3,11 @@
 - [Premières étapes](#premières-étapes)
   - [Première connexion](#première-connexion)
   - [Connexion en SSH](#connexion-en-ssh)
-  - [Mise à jour initiale](#mise-à-jour-initiale)
+- [Configuration de la machine hôte](#configuration-de-la-machine-hôte)
 - [Configuration du VPS](#configuration-du-vps)
   - [Variables Ansible du VPS](#variables-ansible-du-vps)
 - [Vintage Story](#vintage-story)
+  - [Variables Ansible de Vintage Story](#variables-ansible-de-vintage-story)
   - [Installation](#installation)
   - [Service Management](#service-management)
   - [Désinstallation](#désinstallation)
@@ -79,23 +80,15 @@ Suivre cet article [Comment créer et utiliser des clés d'authentification pour
 
    Désormais, il est possible de se connecter sans avoir à saisir le mot de passe.
 
-### Mise à jour initiale
+## Configuration de la machine hôte
 
-1. Mettre à jour le VPS
+Il est nécessaire d'installer les prérequis sur la machine hôte (locale) pour configurer ensuite le VPS.
 
-   ```shell
-   sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y
-   ```
+Ce script met à jours les paquets et installe les dépendances nécessaires pour exécuter les playbooks Ansible.
 
-2. Installer Git et Ansible
-
-   ```shell
-   sudo apt install git ansible -y
-   ```
-
-   Git pour cloner ce _repository_ qui contient le playbook Ansible.
-
-   Ansible pour automatiser la configuration du VPS.
+```shell
+bash scripts/prerequisites.sh
+```
 
 ## Configuration du VPS
 
@@ -104,7 +97,7 @@ Suivre cet article [Comment créer et utiliser des clés d'authentification pour
 ansible-galaxy collection install -r ansible/requirements.yml
 
 # Lancer le playbook de configuration du VPS
-ansible-playbook -i ansible/inventory.ini ansible/playbook-vps-setup.yml
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml
 ```
 
 ### Variables Ansible du VPS
@@ -122,11 +115,22 @@ vps_ssh_port: YYYY # Port SSH par défaut
 
 ## Vintage Story
 
+### Variables Ansible de Vintage Story
+
+Fichier : `ansible/vars/production.yml`
+
+```shell
+# Configuration réseau Vintage Story
+vs_server_ip: X.X.X.X # IP publique du serveur
+vs_port: YYYY # Port du serveur de test
+
+```
+
 ### Installation
 
 ```shell
 # Lancer le playbook d'installation de Vintage Story
-ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vintage-story.yml
 ```
 
 ### Service Management
@@ -149,7 +153,7 @@ sudo systemctl status vintage-story
 
 ```shell
 # Lancer le playbook de désinstallation de Vintage Story
-ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml
 ```
 
 <!-- Links -->

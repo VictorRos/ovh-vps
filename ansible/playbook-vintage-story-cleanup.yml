@@ -1,0 +1,158 @@
+---
+# Commande pour exécuter le playbook
+# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml --extra-vars @ansible/vars/production.yml
+#
+# Simulation complète sans modifications
+# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml --extra-vars @ansible/vars/production.yml --check
+#
+# Avec plus de détails sur ce qui serait changé
+# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml --extra-vars @ansible/vars/production.yml --check --diff
+#
+# === PROTECTION DES SAUVEGARDES ===
+# Les données du monde ({{ vs_world_dir }}) sont automatiquement PRÉSERVÉES
+# Pour supprimer manuellement les données : sudo rm -rf /var/vintagestory/data
+#
+- name: Nettoyage complet de l'installation Vintage Story
+  hosts: vintage_story
+  become: true
+  vars:
+    vs_user: vintagestory
+    vs_home: /home/{{ vs_user }}
+    vs_server_dir: '{{ vs_home }}/server'
+    vs_world_dir: /var/vintagestory/data
+    vs_port: 42420
+
+  tasks:
+    - name: Arrêt du service Vintage Story
+      ansible.builtin.systemd:
+        name: vintage-story
+        state: stopped
+        enabled: false
+      failed_when: false
+      tags:
+        - cleanup
+        - service
+
+    - name: Suppression du service systemd
+      ansible.builtin.file:
+        path: /etc/systemd/system/vintage-story.service
+        state: absent
+      notify: Rechargement de systemd
+      tags:
+        - cleanup
+        - service
+
+    - name: Suppression de la configuration sudo
+      ansible.builtin.file:
+        path: /etc/sudoers.d/vintage-story
+        state: absent
+      tags:
+        - cleanup
+        - service
+
+    - name: Suppression des tâches cron de gestion automatique du serveur
+      ansible.builtin.cron:
+        name: '{{ item }}'
+        state: absent
+      loop:
+        - Démarrage serveur Vintage Story - Semaine à 17h
+        - Démarrage serveur Vintage Story - Weekend à 8h
+        - Arrêt serveur Vintage Story - Tous les jours à 3h
+      tags:
+        - cleanup
+        - maintenance
+
+    - name: Suppression de la règle firewall (UDP)
+      community.general.ufw:
+        rule: allow
+        port: '{{ vs_port }}'
+        proto: udp
+        delete: true
+      failed_when: false
+      tags:
+        - cleanup
+        - firewall
+
+    - name: Suppression de la règle firewall (TCP)
+      community.general.ufw:
+        rule: allow
+        port: '{{ vs_port }}'
+        proto: tcp
+        delete: true
+      failed_when: false
+      tags:
+        - cleanup
+        - firewall
+
+    - name: Suppression complète du répertoire serveur
+      ansible.builtin.file:
+        path: '{{ vs_server_dir }}'
+        state: absent
+      tags:
+        - cleanup
+        - files
+
+    - name: Suppression de l'utilisateur Vintage Story
+      ansible.builtin.user:
+        name: '{{ vs_user }}'
+        state: absent
+        remove: true
+        force: true
+      tags:
+        - cleanup
+        - user
+
+    - name: Suppression des packages .NET (optionnel)
+      ansible.builtin.apt:
+        name:
+          - dotnet-runtime-8.0
+          - libopenal-dev
+        state: absent
+        autoremove: true
+      tags:
+        - cleanup
+        - packages
+        - optional
+
+    - name: Suppression du dépôt Microsoft (optionnel)
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/microsoft-prod.list
+        state: absent
+      tags:
+        - cleanup
+        - packages
+        - optional
+
+    - name: Suppression de la clé GPG Microsoft (optionnel)
+      ansible.builtin.file:
+        path: /usr/share/keyrings/microsoft-prod.gpg
+        state: absent
+      tags:
+        - cleanup
+        - packages
+        - optional
+
+    - name: Nettoyage des fichiers temporaires
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /tmp/vs_server.tar.gz
+        - /tmp/microsoft.asc
+      tags:
+        - cleanup
+        - temp
+
+    - name: Mise à jour du cache APT après nettoyage
+      ansible.builtin.apt:
+        update_cache: true
+      when: cleanup_packages | default(false)
+      tags:
+        - cleanup
+        - packages
+        - optional
+
+  handlers:
+    - name: Rechargement de systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
