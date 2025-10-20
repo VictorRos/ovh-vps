@@ -20,7 +20,6 @@
     vs_home: /home/{{ vs_user }}
     vs_server_dir: '{{ vs_home }}/server'
     vs_world_dir: /var/vintagestory/data
-    vs_port: 42420
 
   tasks:
     - name: Arrêt du service Vintage Story

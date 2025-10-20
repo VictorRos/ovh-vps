@@ -35,6 +35,8 @@
 		"**/megalinter-reports/**",
 		"**/node_modules/**",
 		"**/vscode-extension/**",
+		"**/ansible/files/**",
+		"**/ansible/templates/**",
 		"**/test/**",
 		"**/package-lock.json",
 		"**/*.feature",
@@ -76,5 +78,32 @@
 			"pattern": "/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}/g"
 		}
 	],
-	"words": []
+	"words": [
+		"DATAPATH",
+		"NOPASSWD",
+		"VSPATH",
+		"Vintagestory",
+		"autoclean",
+		"autoremove",
+		"bantime",
+		"blockinfile",
+		"dearmor",
+		"findtime",
+		"libbz",
+		"libc",
+		"libgdbm",
+		"libncursesw",
+		"libnss",
+		"libopenal",
+		"libreadline",
+		"libsqlite",
+		"lineinfile",
+		"maxretry",
+		"nofile",
+		"pyenv",
+		"runtimeconfig",
+		"serverconfig",
+		"servermagicnumbers",
+		"vintagestory"
+	]
 }
