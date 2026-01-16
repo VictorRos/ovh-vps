@@ -1,12 +1,12 @@
 ---
 # Commande pour exécuter le playbook
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml --extra-vars @ansible/vars/production.yml
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story-cleanup.yml
 #
 # Simulation complète sans modifications
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml --extra-vars @ansible/vars/production.yml --check
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story-cleanup.yml --check
 #
 # Avec plus de détails sur ce qui serait changé
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml --extra-vars @ansible/vars/production.yml --check --diff
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story-cleanup.yml --check --diff
 #
 # === PROTECTION DES SAUVEGARDES ===
 # Les données du monde ({{ vs_world_dir }}) sont automatiquement PRÉSERVÉES

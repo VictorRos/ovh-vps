@@ -1,30 +1,30 @@
 ---
 # Prérequis : Installer les collections requises
-# ansible-galaxy collection install -r requirements.yml
+# ansible-galaxy collection install -r ansible/requirements.yml
 #
 # Commande pour exécuter le playbook
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml
 #
 # Simulation complète sans modifications
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --check
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml --check
 #
 # Avec plus de détails sur ce qui serait changé
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --check --diff
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml --check --diff
 #
 # === EXÉCUTION PARTIELLE ===
 # Tags disponibles : system, security, updates, packages, config, firewall, fail2ban, tuning, cleanup
 #
 # Exécuter seulement les tâches système (mise à jour + packages + config + tuning + cleanup) :
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --tags "system"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml --tags "system"
 #
 # Exécuter seulement la sécurité (firewall + fail2ban) :
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --tags "security"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml --tags "security"
 #
 # Exécuter jusqu'aux packages (exclut sécurité) :
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --tags "system" --skip-tags "cleanup"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml --tags "system" --skip-tags "cleanup"
 #
 # Lister toutes les tâches avec leurs tags :
-# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml --list-tags
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml --list-tags
 #
 - name: Configuration du VPS
   hosts: vps

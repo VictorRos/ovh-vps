@@ -2,31 +2,31 @@
 # Prérequis : Fichier de variables sensibles ansible/vars/production.yml
 #
 # Commande pour exécuter le playbook
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml
 #
 # Simulation complète sans modifications
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --check
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --check
 #
 # Avec plus de détails sur ce qui serait changé
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --check --diff
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --check --diff
 #
 # === EXÉCUTION PARTIELLE ===
 # Tags disponibles : setup, user, dependencies, packages, directories, server, download, install, config, firewall, scripts, service, cleanup
 #
 # Installer seulement les dépendances :
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --tags "setup"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --tags "setup"
 #
 # Installer seulement le serveur Vintage Story :
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --tags "server"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --tags "server"
 #
 # Installer seulement le serveur Vintage Story sans les scripts et le service :
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --tags "server" --skip-tags "scripts,service"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --tags "server" --skip-tags "scripts,service"
 #
 # Seulement firewall et service :
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --tags "firewall,service"
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --tags "firewall,service"
 #
 # Lister toutes les tâches avec leurs tags :
-# ansible-playbook -i ansible/inventory.ini ansible/playbook-vintage-story.yml --extra-vars @ansible/vars/production.yml --list-tags
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --list-tags
 #
 - name: Installation et configuration de Vintage Story
   hosts: vintage_story
@@ -37,7 +37,7 @@
     vs_home: /home/{{ vs_user }}
     vs_server_dir: '{{ vs_home }}/server'
     vs_world_dir: /var/vintagestory/data
-    vs_version: 1.21.5 # Version actuelle de Vintage Story
+    vs_version: 1.21.6 # Version actuelle de Vintage Story
 
     # Note: Les variables de configuration du serveur sont dans group_vars/vintage_story.yml
 
@@ -346,6 +346,8 @@
           alias server-status='sudo systemctl status vintage-story'
           alias server-stop='sudo systemctl stop vintage-story'
           alias server-start='sudo systemctl start vintage-story'
+          alias server-command='{{ vs_server_dir }}/server.sh command'
+          alias server-logs='cat {{ vs_world_dir }}/Logs/server-main.log'
         marker: '# {mark} ANSIBLE MANAGED BLOCK - Vintage Story Server'
       tags:
         - server

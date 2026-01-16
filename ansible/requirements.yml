@@ -3,5 +3,5 @@
 collections:
   - name: community.general
     # https://galaxy.ansible.com/ui/repo/published/community/general/
-    version: 11.4.0
+    version: 12.2.0
     source: https://galaxy.ansible.com

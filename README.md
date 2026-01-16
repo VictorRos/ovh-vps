@@ -97,7 +97,7 @@ bash scripts/prerequisites.sh
 ansible-galaxy collection install -r ansible/requirements.yml
 
 # Lancer le playbook de configuration du VPS
-ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vps-setup.yml
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vps-setup.yml
 ```
 
 ### Variables Ansible du VPS
@@ -130,7 +130,7 @@ vs_port: YYYY # Port du serveur de test
 
 ```shell
 # Lancer le playbook d'installation de Vintage Story
-ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vintage-story.yml
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml
 ```
 
 ### Service Management
@@ -153,7 +153,7 @@ sudo systemctl status vintage-story
 
 ```shell
 # Lancer le playbook de désinstallation de Vintage Story
-ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.ini ansible/playbook-vintage-story-cleanup.yml
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story-cleanup.yml
 ```
 
 <!-- Links -->
