@@ -1,0 +1,39 @@
+---
+# Variables par défaut pour le rôle vps_setup
+# Toutes les variables sont préfixées par vps_setup_ pour la conformité Ansible Lint
+
+vps_setup_timezone: Europe/Paris
+
+vps_setup_packages:
+  - build-essential # Compilateurs C/C++, make, libc-dev (essentiel)
+  - ca-certificates # Certificats SSL/TLS (crucial pour HTTPS)
+  - cron # Planificateur de tâches
+  - curl # Outil de transfert de données
+  - fail2ban # Protection contre les intrusions (brute-force)
+  - git # Système de contrôle de version
+  - gnupg # Gestion des clés GPG (pour dépôts sécurisés)
+  - htop # Moniteur système interactif
+  - libssl-dev # Développement SSL (pour compilation Python, etc.)
+  - lsb-release # Informations sur la distribution
+  - make # Outil de build (souvent nécessaire)
+  - nano # Éditeur de texte simple en ligne de commande
+  - rsync # Outil de synchronisation de fichiers
+  - screen # Multiplexeur de terminal
+  - tmux # Multiplexeur de terminal
+  - tree # Affichage en arbre des répertoires
+  - ufw # Pare-feu Uncomplicated
+  - unzip # Décompression de fichiers ZIP
+  - vim # Éditeur de texte avancé
+  - wget # Outil de téléchargement
+  - xz-utils # Compression XZ (formats .tar.xz courants)
+  - zlib1g-dev # Compression zlib (pour compilations)
+
+vps_setup_fail2ban_bantime: 3600
+vps_setup_fail2ban_findtime: 600
+vps_setup_fail2ban_maxretry: 3
+
+vps_setup_limits_nofile: '65536'
+
+# Variables utilisées dans les tâches (peuvent être surchargées)
+vps_setup_admin_user: '{{ ansible_user }}'
+vps_setup_ssh_port: '{{ ansible_port }}'

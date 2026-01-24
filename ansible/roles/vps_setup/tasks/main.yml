@@ -1,0 +1,126 @@
+---
+# Tâches pour le rôle vps_setup
+
+- name: Mise à jour du cache des paquets
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == 'Debian'
+  tags:
+    - system
+    - updates
+
+- name: Mise à jour complète du système
+  ansible.builtin.apt:
+    upgrade: dist
+  when: ansible_os_family == 'Debian'
+  tags:
+    - system
+    - updates
+
+- name: Installation des outils essentiels
+  ansible.builtin.apt:
+    name: '{{ vps_setup_packages }}'
+    state: present
+  when: ansible_os_family == 'Debian'
+  tags:
+    - system
+    - packages
+
+- name: Configuration du fuseau horaire
+  community.general.timezone:
+    name: '{{ vps_setup_timezone }}'
+  tags:
+    - system
+    - config
+
+- name: Configuration de base du pare-feu UFW
+  community.general.ufw:
+    rule: allow
+    port: '{{ vps_setup_ssh_port }}'
+    proto: tcp
+  tags:
+    - security
+    - firewall
+
+- name: Activation du pare-feu UFW
+  community.general.ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+  tags:
+    - security
+    - firewall
+
+- name: Configuration de Fail2Ban pour SSH
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [DEFAULT]
+        bantime = {{ vps_setup_fail2ban_bantime }}
+        findtime = {{ vps_setup_fail2ban_findtime }}
+        maxretry = {{ vps_setup_fail2ban_maxretry }}
+
+      [sshd]
+        enabled = true
+        port = {{ vps_setup_ssh_port }}
+    mode: '0644'
+  notify: Restart fail2ban
+  tags:
+    - security
+    - fail2ban
+
+- name: Configuration des limites système
+  community.general.pam_limits:
+    domain: '*'
+    limit_type: soft
+    limit_item: nofile
+    value: '{{ vps_setup_limits_nofile }}'
+  tags:
+    - system
+    - tuning
+
+- name: Nettoyage des paquets inutiles
+  ansible.builtin.apt:
+    autoremove: true
+    autoclean: true
+  when: ansible_os_family == 'Debian'
+  tags:
+    - system
+    - cleanup
+
+- name: Ajout des alias utiles dans .bashrc
+  ansible.builtin.blockinfile:
+    path: '{{ item.path }}'
+    owner: '{{ item.owner }}'
+    group: '{{ item.group }}'
+    mode: '0644'
+    create: true
+    block: |
+      # Grep with colors
+      export GREP_COLOR='mt=31'
+      alias grep='grep --color=auto'
+
+      ## Shell
+      alias ll='ls -hal'
+      alias la='ls -A'
+      alias lh='ls -ah'
+      alias l='ls -CF'
+      alias lll='ls -lh | less'
+      alias llt='ls -altF'
+      alias sh-755='find -name "*.sh" | xargs chmod 755'
+      alias uuid='uuidgen | tr "[:upper:]" "[:lower:]"'
+
+      ## NPM
+      alias nr='npm run'
+      alias nru='npm run update-dependencies'
+    marker: '# {mark} ANSIBLE MANAGED BLOCK - General Aliases'
+  loop:
+    - path: /root/.bashrc
+      owner: root
+      group: root
+    - path: /home/{{ vps_setup_admin_user }}/.bashrc
+      owner: '{{ vps_setup_admin_user }}'
+      group: '{{ vps_setup_admin_user }}'
+  tags:
+    - config

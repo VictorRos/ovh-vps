@@ -1,0 +1,9 @@
+---
+# Variables par défaut pour le rôle vintage_story_cleanup
+# Toutes les variables sont préfixées par vintage_story_cleanup_ pour la conformité Ansible Lint
+
+vintage_story_cleanup_user: vintagestory
+vintage_story_cleanup_home: /home/{{ vintage_story_cleanup_user }}
+vintage_story_cleanup_server_dir: '{{ vintage_story_cleanup_home }}/server'
+vintage_story_cleanup_world_dir: /var/vintagestory/data
+vintage_story_cleanup_remove_packages: false

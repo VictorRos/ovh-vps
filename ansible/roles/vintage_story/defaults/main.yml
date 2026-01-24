@@ -1,0 +1,9 @@
+---
+# Variables par défaut pour le rôle vintage_story
+# Toutes les variables sont préfixées par vintage_story_ pour la conformité Ansible Lint
+
+vintage_story_user: vintagestory
+vintage_story_home: /home/{{ vintage_story_user }}
+vintage_story_server_dir: '{{ vintage_story_home }}/server'
+vintage_story_world_dir: /var/vintagestory/data
+vintage_story_version: 1.21.6

@@ -1,0 +1,6 @@
+---
+# Handlers pour le rôle vintage_story_cleanup
+
+- name: Rechargement de systemd
+  ansible.builtin.systemd:
+    daemon_reload: true

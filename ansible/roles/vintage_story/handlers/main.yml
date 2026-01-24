@@ -1,0 +1,43 @@
+---
+# Handlers pour le rôle vintage_story
+
+- name: Téléchargement du serveur Vintage Story
+  ansible.builtin.get_url:
+    url: https://cdn.vintagestory.at/gamefiles/stable/vs_server_{{ ansible_system | lower }}-{{ 'x64' if ansible_architecture == 'x86_64' else ansible_architecture }}_{{ vintage_story_version }}.tar.gz
+    dest: /tmp/vs_server.tar.gz
+    mode: '0644'
+
+- name: Extraction du serveur
+  ansible.builtin.unarchive:
+    src: /tmp/vs_server.tar.gz
+    dest: '{{ vintage_story_server_dir }}'
+    owner: '{{ vintage_story_user }}'
+    group: '{{ vintage_story_user }}'
+    remote_src: true
+
+- name: Configuration des permissions exécutables
+  ansible.builtin.file:
+    path: '{{ vintage_story_server_dir }}/{{ item }}'
+    mode: '0755'
+    owner: '{{ vintage_story_user }}'
+    group: '{{ vintage_story_user }}'
+  loop:
+    - VintagestoryServer
+    - server.sh
+
+- name: Création du fichier de version
+  ansible.builtin.copy:
+    content: '{{ vintage_story_version }}'
+    dest: '{{ vintage_story_server_dir }}/.vs_version'
+    owner: '{{ vintage_story_user }}'
+    group: '{{ vintage_story_user }}'
+    mode: '0644'
+
+- name: Nettoyage des fichiers temporaires
+  ansible.builtin.file:
+    path: /tmp/vs_server.tar.gz
+    state: absent
+
+- name: Rechargement de systemd
+  ansible.builtin.systemd:
+    daemon_reload: true

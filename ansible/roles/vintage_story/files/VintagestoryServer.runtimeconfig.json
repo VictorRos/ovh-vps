@@ -1,0 +1,18 @@
+{
+	"runtimeOptions": {
+		"tfm": "net8.0",
+		"framework": {
+			"name": "Microsoft.NETCore.App",
+			"version": "8.0.0"
+		},
+		"configProperties": {
+			"System.Reflection.Metadata.MetadataUpdater.IsSupported": false,
+			"System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
+			"System.Runtime.TieredPGO": true,
+			"System.GC.HeapHardLimit": 8589934592,
+			"System.GC.Server": true,
+			"System.GC.Concurrent": true,
+			"System.GC.RetainVM": true
+		}
+	}
+}

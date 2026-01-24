@@ -1,0 +1,134 @@
+---
+# Tâches pour le rôle vintage_story_cleanup
+
+- name: Arrêt du service Vintage Story
+  ansible.builtin.systemd:
+    name: vintage-story
+    state: stopped
+    enabled: false
+  failed_when: false
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression du service systemd
+  ansible.builtin.file:
+    path: /etc/systemd/system/vintage-story.service
+    state: absent
+  notify: Rechargement de systemd
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression de la configuration sudo
+  ansible.builtin.file:
+    path: /etc/sudoers.d/vintage-story
+    state: absent
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression des tâches cron de gestion automatique du serveur
+  ansible.builtin.cron:
+    name: '{{ item }}'
+    state: absent
+  loop:
+    - Démarrage serveur Vintage Story - Semaine à 17h
+    - Démarrage serveur Vintage Story - Weekend à 8h
+    - Arrêt serveur Vintage Story - Tous les jours à 3h
+  tags:
+    - cleanup
+    - maintenance
+
+- name: Suppression de la règle firewall (UDP)
+  community.general.ufw:
+    rule: allow
+    port: '{{ vs_port }}'
+    proto: udp
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression de la règle firewall (TCP)
+  community.general.ufw:
+    rule: allow
+    port: '{{ vs_port }}'
+    proto: tcp
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression complète du répertoire serveur
+  ansible.builtin.file:
+    path: '{{ vintage_story_cleanup_server_dir }}'
+    state: absent
+  tags:
+    - cleanup
+    - files
+
+- name: Suppression de l'utilisateur Vintage Story
+  ansible.builtin.user:
+    name: '{{ vintage_story_cleanup_user }}'
+    state: absent
+    remove: true
+    force: true
+  tags:
+    - cleanup
+    - user
+
+- name: Suppression des packages .NET (optionnel)
+  ansible.builtin.apt:
+    name:
+      - dotnet-runtime-8.0
+      - libopenal-dev
+    state: absent
+    autoremove: true
+  when: vintage_story_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Suppression du dépôt Microsoft (optionnel)
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/microsoft-prod.list
+    state: absent
+  when: vintage_story_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Suppression de la clé GPG Microsoft (optionnel)
+  ansible.builtin.file:
+    path: /usr/share/keyrings/microsoft-prod.gpg
+    state: absent
+  when: vintage_story_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Nettoyage des fichiers temporaires
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - /tmp/vs_server.tar.gz
+    - /tmp/microsoft.asc
+  tags:
+    - cleanup
+    - temp
+
+- name: Mise à jour du cache APT après nettoyage
+  ansible.builtin.apt:
+    update_cache: true
+  when: vintage_story_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional
