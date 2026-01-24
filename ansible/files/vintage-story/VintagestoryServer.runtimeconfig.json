@@ -9,7 +9,7 @@
 			"System.Reflection.Metadata.MetadataUpdater.IsSupported": false,
 			"System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
 			"System.Runtime.TieredPGO": true,
-			"System.GC.HeapHardLimit": 4294967296,
+			"System.GC.HeapHardLimit": 8589934592,
 			"System.GC.Server": true,
 			"System.GC.Concurrent": true,
 			"System.GC.RetainVM": true

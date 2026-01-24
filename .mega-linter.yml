@@ -25,8 +25,6 @@ DISABLE_LINTERS:
   - JSON_V8R
   # Conflicts against prettier
   - MARKDOWN_MARKDOWN_TABLE_FORMATTER
-  # Checkov (false positives)
-  - REPOSITORY_CHECKOV
   # Note: New starting 7.2.x - Similar to checkov
   - REPOSITORY_GRYPE
   # Note: New starting 7.2.x - Similar to gitleaks (stuck pipeline infinite loop)
@@ -41,6 +39,16 @@ DISABLE_LINTERS:
   - YAML_V8R
 DISABLE:
   - SQL
+DISABLE_ERRORS_LINTERS:
+  # All runs are not idempotent and can fail from one run to another
+  # Errors are not critical for the pipeline, but insights are still useful
+  - SPELL_LYCHEE
+  # Following linters are new (starting 9.3.x) and in tryout phase
+  # They are enabled but errors won't fail the pipeline
+  # Note: New starting 9.3.x - Similar to markdownlint
+  - MARKDOWN_RUMDL
+  # Note: New starting 9.3.x - Similar to gitleaks and trufflehog
+  - REPOSITORY_KINGFISHER
 
 # BASH
 BASH_SHFMT_ARGUMENTS: -i 2 -sr -ci -bn
@@ -67,7 +75,11 @@ TYPESCRIPT_ES_ARGUMENTS: --version
 # SPELL
 SPELL_CSPELL_ARGUMENTS: --dot --gitignore
 SPELL_LYCHEE_CONFIG_FILE: .lychee.toml
-SPELL_LYCHEE_FILTER_REGEX_EXCLUDE: (package-lock\.json$)
+SPELL_LYCHEE_FILTER_REGEX_EXCLUDE: >-
+  (
+    docker-compose.*\.yml$|
+    package-lock\.json$
+  )
 
 # REPOSITORY_GITLEAKS
 REPOSITORY_GITLEAKS_ARGUMENTS: --no-git

@@ -1,13 +1,13 @@
 {
 	"FileEditWarning": "",
-	"ConfigVersion": "1.8",
+	"ConfigVersion": "1.9",
 	"ServerName": "{{ vs_server_name | default('[FR] Petites Pousses') }}",
 	"ServerUrl": null,
 	"ServerDescription": "{{ vs_server_description | default('Serveur Vintage Story des Petites Pousses') }}",
 	"WelcomeMessage": "{{ vs_welcome_message | default('Bienvenue {0}, puissiez-vous survivre et prospérer.') }}",
 	"Ip": {% if vs_server_ip is defined %}"{{ vs_server_ip }}"{% else %}null{% endif %},
 	"Port": {{ vs_port | default(42420) }},
-	"Upnp": true,
+	"Upnp": false,
 	"CompressPackets": true,
 	"AdvertiseServer": {{ vs_advertise_server | default(false) | lower }},
 	"MaxClients": {{ vs_max_clients | default(4) }},
@@ -220,7 +220,8 @@
 				"readlists",
 				"attackcreatures",
 				"attackplayers",
-				"selfkill"
+				"selfkill",
+				"manageotherplayergroups"
 			],
 			"RuntimePrivileges": [],
 			"DefaultGameMode": 1,
@@ -259,7 +260,8 @@
 				"readlists",
 				"attackcreatures",
 				"attackplayers",
-				"selfkill"
+				"selfkill",
+				"manageotherplayergroups"
 			],
 			"RuntimePrivileges": [],
 			"DefaultGameMode": 2,
@@ -309,7 +311,8 @@
 				"controlplayergroups",
 				"manageplayergroups",
 				"selfkill",
-				"worldedit"
+				"worldedit",
+				"manageotherplayergroups"
 			],
 			"RuntimePrivileges": [],
 			"DefaultGameMode": 1,
@@ -420,6 +423,7 @@
 	"AllowFallingBlocks": {{ vs_allow_falling_blocks | default(true) | lower }},
 	"HostedMode": {{ vs_hosted_mode | default(false) | lower }},
 	"HostedModeAllowMods": {{ vs_hosted_mode_mods | default(false) | lower }},
+	"VhIdentifier": null,
 	"StartupCommands": null,
 	"RepairMode": false,
 	"AnalyzeMode": false,
