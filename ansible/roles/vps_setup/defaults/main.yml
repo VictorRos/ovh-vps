@@ -36,4 +36,5 @@ vps_setup_limits_nofile: '65536'
 
 # Variables utilisées dans les tâches (peuvent être surchargées)
 vps_setup_admin_user: '{{ ansible_user }}'
-vps_setup_ssh_port: '{{ ansible_port }}'
+# Référence aux variables globales pour la connexion SSH (définies dans vars/production.yml)
+vps_setup_ssh_port: '{{ vps_ssh_port | default(ansible_port | default(22)) }}'

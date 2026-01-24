@@ -107,7 +107,7 @@ Fichier : `ansible/vars/production.yml`
 ```shell
 # Variables d'environnement pour le développement/test
 
-# Configuration du serveur VPS
+# Variables globales pour la connexion SSH (utilisées par tous les playbooks)
 vps_ip: X.X.X.X # IP publique du serveur
 vps_ssh_port: YYYY # Port SSH par défaut
 
@@ -121,8 +121,8 @@ Fichier : `ansible/vars/production.yml`
 
 ```shell
 # Configuration réseau Vintage Story
-vs_server_ip: X.X.X.X # IP publique du serveur
-vs_port: YYYY # Port du serveur de test
+vintage_story_server_ip: X.X.X.X # IP publique du serveur
+vintage_story_port: YYYY # Port du serveur
 
 ```
 

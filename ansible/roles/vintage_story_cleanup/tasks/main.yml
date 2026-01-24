@@ -43,7 +43,7 @@
 - name: Suppression de la règle firewall (UDP)
   community.general.ufw:
     rule: allow
-    port: '{{ vs_port }}'
+    port: '{{ vintage_story_cleanup_port }}'
     proto: udp
     delete: true
   failed_when: false
@@ -54,7 +54,7 @@
 - name: Suppression de la règle firewall (TCP)
   community.general.ufw:
     rule: allow
-    port: '{{ vs_port }}'
+    port: '{{ vintage_story_cleanup_port }}'
     proto: tcp
     delete: true
   failed_when: false

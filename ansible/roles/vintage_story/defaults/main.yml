@@ -7,3 +7,113 @@ vintage_story_home: /home/{{ vintage_story_user }}
 vintage_story_server_dir: '{{ vintage_story_home }}/server'
 vintage_story_world_dir: /var/vintagestory/data
 vintage_story_version: 1.21.6
+
+# Configuration serveur personnalisable
+vintage_story_server_name: '[FR] Petites Pousses'
+vintage_story_server_description: Serveur Vintage Story des Petites Pousses
+vintage_story_welcome_message: Bienvenue {0}, puissiez-vous survivre et prospérer.
+vintage_story_max_clients: 4
+vintage_story_language: fr
+vintage_story_advertise_server: false
+
+# Configuration du monde
+vintage_story_world_name: Petites Pousses
+vintage_story_world_save_name: petites-pousses
+vintage_story_world_seed: 1411521110
+
+# Rôles et permissions
+vintage_story_default_role: suplayer
+vintage_story_anti_abuse: 0
+
+# Configuration du monde avancée
+vintage_story_allow_creative: true
+vintage_story_allow_land_claiming: true
+vintage_story_allow_map: true
+vintage_story_auction_house: true
+vintage_story_block_gravity: sandgravel
+vintage_story_cave_ins: 'off'
+vintage_story_class_exclusive_recipes: true
+vintage_story_clutter_obtainable: ifrepaired
+vintage_story_color_worldmap: true
+vintage_story_coordinate_hud: true
+vintage_story_creature_hostility: aggressive
+vintage_story_creature_strength: '1'
+vintage_story_creature_swim_speed: '2'
+vintage_story_days_per_month: '12'
+vintage_story_death_punishment: keep
+vintage_story_dropped_items_timer: '3600'
+vintage_story_food_spoil_speed: '1'
+vintage_story_game_mode: survival
+vintage_story_geologic_activity: '0.1'
+vintage_story_global_deposit_spawn: '1'
+vintage_story_global_forestation: '0'
+vintage_story_global_precipitation: '1'
+vintage_story_global_temperature: '1'
+vintage_story_grace_timer: '2'
+vintage_story_harsh_winters: 'true'
+vintage_story_health_regen: '1'
+vintage_story_hunger_speed: '1'
+vintage_story_landcover: '0.5'
+vintage_story_landform_scale: '1.0'
+vintage_story_lightning_fires: true
+vintage_story_lore_content: true
+vintage_story_lung_capacity: '40000'
+vintage_story_microblock_chiseling: stonewood
+vintage_story_move_speed: '1.5'
+vintage_story_no_liquid_transport: false
+vintage_story_ocean_scale: '3'
+vintage_story_play_style_lang: surviveandbuild-bands
+vintage_story_play_style: surviveandbuild
+vintage_story_player_health: '20'
+vintage_story_player_lives: '-1'
+vintage_story_polar_equator_distance: '100000'
+vintage_story_propick_radius: '6'
+vintage_story_sapling_growth: '1'
+vintage_story_seasons: 'enabled'
+vintage_story_snow_accum: 'true'
+vintage_story_spawn_radius: '50'
+vintage_story_starting_climate: temperate
+vintage_story_story_structures_scaling: '1'
+vintage_story_surface_copper: '0.5'
+vintage_story_surface_tin: '0.25'
+vintage_story_temp_resistance: '0'
+vintage_story_temporal_gear_respawn: '-1'
+vintage_story_temporal_rifts: visible
+vintage_story_temporal_stability: true
+vintage_story_temporal_storm_sleeping: '1'
+vintage_story_temporal_storms: veryrare
+vintage_story_tempstorm_duration: '0.5'
+vintage_story_tool_durability: '1'
+vintage_story_tool_mining_speed: '1'
+vintage_story_underground_farming: true
+vintage_story_upheaval_commonness: '0.3'
+vintage_story_world_climate: realistic
+vintage_story_world_edge: traversable
+vintage_story_world_length: '600000'
+vintage_story_world_type: standard
+vintage_story_world_width: '600000'
+
+# Configuration serveur avancée
+vintage_story_allow_falling_blocks: true
+vintage_story_allow_fire_spread: true
+vintage_story_allow_pvp: true
+vintage_story_chat_rate_limit: 1000
+vintage_story_corruption_protection: true
+vintage_story_die_above_error_count: 100000
+vintage_story_die_above_memory: 50000
+vintage_story_die_below_disk_space: 400
+vintage_story_disable_mod_safety: false
+vintage_story_group_chat_history: 20
+vintage_story_hosted_mode_mods: false
+vintage_story_hosted_mode: false
+vintage_story_log_block_actions: false
+vintage_story_log_file_split: 500000
+vintage_story_login_flood_protection: false
+vintage_story_max_group_channels: 10
+vintage_story_next_group_uid: 11
+vintage_story_only_whitelisted: false
+vintage_story_regenerate_corrupt_chunks: false
+vintage_story_server_identifier: 7b156115-ef51-45d3-9d27-b638d41a1057
+vintage_story_temp_ip_block: false
+vintage_story_verify_player_auth: true
+vintage_story_whitelist_mode: 2
