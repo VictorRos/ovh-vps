@@ -5,3 +5,7 @@ collections:
     # https://galaxy.ansible.com/ui/repo/published/community/general/
     version: 12.2.0
     source: https://galaxy.ansible.com
+  - name: ansible.posix
+    # https://galaxy.ansible.com/ui/repo/published/ansible/posix/
+    version: 2.1.0
+    source: https://galaxy.ansible.com

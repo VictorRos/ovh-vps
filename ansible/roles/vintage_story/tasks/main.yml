@@ -11,6 +11,49 @@
     - setup
     - user
 
+- name: Création du répertoire .ssh pour l'utilisateur
+  ansible.builtin.file:
+    path: '{{ vintage_story_home }}/.ssh'
+    state: directory
+    owner: '{{ vintage_story_user }}'
+    group: '{{ vintage_story_user }}'
+    mode: '0700'
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Détermination du chemin de la clé publique SSH
+  ansible.builtin.set_fact:
+    vintage_story_ssh_public_key_path: '{{ ansible_ssh_private_key_file }}.pub'
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Vérification de l'existence de la clé publique SSH
+  ansible.builtin.stat:
+    path: '{{ vintage_story_ssh_public_key_path }}'
+  register: vintage_story_ssh_public_key_stat
+  delegate_to: localhost
+  become: false
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Ajout de la clé SSH publique aux authorized_keys
+  ansible.posix.authorized_key:
+    user: '{{ vintage_story_user }}'
+    state: present
+    key: '{{ lookup("file", vintage_story_ssh_public_key_path) }}'
+    comment: '{{ lookup("pipe", "whoami") }}@{{ lookup("pipe", "hostname") }}'
+  when: vintage_story_ssh_public_key_stat.stat.exists
+  tags:
+    - setup
+    - user
+    - ssh
+
 - name: Ajout des alias utiles dans .bashrc
   ansible.builtin.blockinfile:
     path: '{{ vintage_story_home }}/.bashrc'
