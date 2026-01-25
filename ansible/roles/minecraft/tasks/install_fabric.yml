@@ -1,0 +1,126 @@
+---
+# Installation de Fabric
+
+- name: Vérification du fichier de version Fabric
+  ansible.builtin.stat:
+    path: '{{ minecraft_server_dir }}/.fabric_version'
+  register: fabric_version_file_stat
+  tags:
+    - server
+    - download
+
+- name: Lecture de la version installée
+  ansible.builtin.slurp:
+    src: '{{ minecraft_server_dir }}/.fabric_version'
+  register: fabric_installed_version_raw
+  when: fabric_version_file_stat.stat.exists
+  tags:
+    - server
+    - download
+
+- name: Vérification de la nécessité de mise à jour
+  ansible.builtin.debug:
+    msg: Installation ou mise à jour du serveur Fabric vers la version {{ minecraft_version }}-{{ minecraft_fabric_loader_version }}
+  when: >
+    not fabric_version_file_stat.stat.exists or
+    (fabric_installed_version_raw.content | b64decode | trim) != (minecraft_version + '-' + minecraft_fabric_loader_version)
+  notify:
+    - Téléchargement du serveur vanilla Minecraft
+    - Téléchargement de Fabric Loader
+    - Installation de Fabric sur le serveur vanilla
+    - Création du fichier de version Fabric
+    - Nettoyage des fichiers temporaires
+  changed_when: >
+    not fabric_version_file_stat.stat.exists or
+    (fabric_installed_version_raw.content | b64decode | trim) != (minecraft_version + '-' + minecraft_fabric_loader_version)
+  tags:
+    - server
+    - download
+
+- name: Exécution immédiate des handlers d'installation Fabric
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - server
+    - download
+
+- name: Vérification de l'existence du fichier server.jar dans le répertoire serveur
+  ansible.builtin.find:
+    paths: '{{ minecraft_server_dir }}'
+    patterns: 'server.jar,minecraft-server-*.jar'
+    file_type: file
+  register: fabric_server_jar_check
+  tags:
+    - server
+    - download
+
+- name: Renommage du fichier trouvé en server.jar dans le répertoire serveur
+  ansible.builtin.command:
+    cmd: mv "{{ fabric_server_jar_check.files[0].path }}" "{{ minecraft_server_dir }}/server.jar"
+  when: >
+    fabric_server_jar_check.files | length > 0 and
+    fabric_server_jar_check.files[0].path != (minecraft_server_dir + "/server.jar")
+  tags:
+    - server
+    - download
+
+- name: Vérification de l'existence du fichier server.jar dans le répertoire serveur (après renommage)
+  ansible.builtin.stat:
+    path: '{{ minecraft_server_dir }}/server.jar'
+  register: server_jar_final_stat
+  tags:
+    - server
+    - download
+
+- name: Téléchargement du serveur vanilla si server.jar n'existe pas
+  ansible.builtin.get_url:
+    url: '{{ minecraft_server_manifest.url }}'
+    dest: '{{ minecraft_server_dir }}/server.jar'
+    mode: '0644'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+  when: >
+    not server_jar_final_stat.stat.exists and
+    minecraft_server_manifest is defined and
+    minecraft_server_manifest.url is defined
+  tags:
+    - server
+    - download
+
+- name: Vérification de l'existence du lien symbolique dans le répertoire de données
+  ansible.builtin.stat:
+    path: '{{ minecraft_data_dir }}/server.jar'
+  register: server_jar_link_stat
+  tags:
+    - server
+    - download
+
+- name: Vérification finale de l'existence du fichier server.jar dans le répertoire serveur
+  ansible.builtin.stat:
+    path: '{{ minecraft_server_dir }}/server.jar'
+  register: server_jar_final_check
+  tags:
+    - server
+    - download
+
+- name: Suppression du lien symbolique cassé s'il existe
+  ansible.builtin.file:
+    path: '{{ minecraft_data_dir }}/server.jar'
+    state: absent
+  when: >
+    server_jar_link_stat.stat.exists and
+    (not server_jar_link_stat.stat.islnk or not server_jar_final_check.stat.exists)
+  tags:
+    - server
+    - download
+
+- name: Création du lien symbolique server.jar vers le fichier dans le répertoire serveur
+  ansible.builtin.file:
+    src: '{{ minecraft_server_dir }}/server.jar'
+    dest: '{{ minecraft_data_dir }}/server.jar'
+    state: link
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+  when: server_jar_final_check.stat.exists
+  tags:
+    - server
+    - download

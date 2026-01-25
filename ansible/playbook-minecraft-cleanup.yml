@@ -1,0 +1,30 @@
+---
+# Commande pour exécuter le playbook
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft-cleanup.yml
+#
+# Simulation complète sans modifications
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft-cleanup.yml --check
+#
+# Avec plus de détails sur ce qui serait changé
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft-cleanup.yml --check --diff
+#
+# === PROTECTION DES SAUVEGARDES ===
+#
+# Par défaut, le cleanup PRÉSERVE les mondes dans {{ minecraft_cleanup_data_dir }}/worlds/
+# pour permettre une réinstallation ultérieure sans perdre les données du monde.
+#
+# Sont supprimés :
+# - Mods, logs, fichiers de configuration (server.properties, eula.txt, etc.)
+# - Scripts, service systemd, configuration sudo, règles firewall
+#
+# Sont préservés :
+# - Les mondes dans {{ minecraft_cleanup_data_dir }}/worlds/
+#
+# Pour supprimer AUSSI les mondes, modifiez le rôle minecraft_cleanup ou supprimez
+# manuellement : sudo rm -rf /var/minecraft/data/worlds
+#
+- name: Nettoyage complet de l'installation Minecraft
+  hosts: minecraft
+  become: true
+  roles:
+    - minecraft_cleanup

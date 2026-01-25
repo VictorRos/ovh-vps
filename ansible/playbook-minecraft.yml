@@ -1,0 +1,35 @@
+---
+# Prérequis : Fichier de variables sensibles ansible/vars/production.yml
+#
+# Commande pour exécuter le playbook
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml
+#
+# Simulation complète sans modifications
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --check
+#
+# Avec plus de détails sur ce qui serait changé
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --check --diff
+#
+# === EXÉCUTION PARTIELLE ===
+# Tags disponibles : setup, user, dependencies, packages, directories, server, download, install, config, firewall, scripts, service, mods
+#
+# Installer seulement les dépendances :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --tags "setup"
+#
+# Installer seulement le serveur Minecraft :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --tags "server"
+#
+# Installer seulement les mods :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --tags "mods"
+#
+# Seulement firewall et service :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --tags "firewall,service"
+#
+# Lister toutes les tâches avec leurs tags :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml --list-tags
+#
+- name: Installation et configuration de Minecraft avec Fabric
+  hosts: minecraft
+  become: true
+  roles:
+    - minecraft

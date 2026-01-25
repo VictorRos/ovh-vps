@@ -1,0 +1,13 @@
+---
+# Activation et démarrage du service
+
+- name: Activation et démarrage du service Minecraft
+  ansible.builtin.systemd:
+    name: minecraft
+    enabled: '{{ minecraft_service_enabled }}'
+    state: '{{ minecraft_service_state }}'
+    daemon_reload: true
+  tags:
+    - server
+    - config
+    - service

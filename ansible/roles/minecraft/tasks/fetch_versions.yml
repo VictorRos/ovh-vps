@@ -1,0 +1,153 @@
+---
+# Récupération des versions Minecraft et Fabric
+
+- name: Récupération du manifest Minecraft pour la version {{ minecraft_version }}
+  ansible.builtin.uri:
+    url: 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'
+    method: GET
+    return_content: true
+    body_format: json
+    status_code: [200]
+    timeout: 30
+  register: minecraft_version_manifest
+  ignore_errors: yes
+  until: minecraft_version_manifest is defined and minecraft_version_manifest.status == 200
+  retries: 5
+  delay: 3
+  tags:
+    - server
+    - download
+
+- name: Vérification que le manifest Minecraft a été récupéré
+  ansible.builtin.fail:
+    msg: "Impossible de récupérer le manifest Minecraft après 5 tentatives. Vérifiez la connexion réseau."
+  when: minecraft_version_manifest is not defined or minecraft_version_manifest.status != 200
+  tags:
+    - server
+    - download
+
+- name: Extraction du hash du serveur depuis le manifest
+  ansible.builtin.set_fact:
+    minecraft_server_manifest: '{{ minecraft_version_manifest.json.versions | selectattr("id", "equalto", minecraft_version) | list | first }}'
+  when: minecraft_version_manifest is defined and minecraft_version_manifest.json is defined
+  tags:
+    - server
+    - download
+
+- name: Récupération des détails de la version Minecraft
+  ansible.builtin.uri:
+    url: '{{ minecraft_server_manifest.url }}'
+    method: GET
+    return_content: true
+    body_format: json
+    status_code: [200]
+    timeout: 30
+  register: minecraft_version_details
+  ignore_errors: yes
+  until: minecraft_version_details is defined and minecraft_version_details.status == 200
+  retries: 5
+  delay: 3
+  when: minecraft_server_manifest is defined and minecraft_server_manifest.url is defined
+  tags:
+    - server
+    - download
+
+- name: Vérification que les détails de version Minecraft ont été récupérés
+  ansible.builtin.fail:
+    msg: "Impossible de récupérer les détails de version Minecraft après 5 tentatives. Vérifiez la connexion réseau."
+  when: >
+    minecraft_server_manifest is defined and
+    minecraft_server_manifest.url is defined and
+    (minecraft_version_details is not defined or minecraft_version_details.status != 200)
+  tags:
+    - server
+    - download
+
+- name: Extraction du hash du serveur depuis les détails de version
+  ansible.builtin.set_fact:
+    minecraft_server_manifest:
+      hash: '{{ minecraft_version_details.json.downloads.server.sha1 }}'
+      url: '{{ minecraft_version_details.json.downloads.server.url }}'
+  when: >
+    minecraft_version_details is defined and
+    minecraft_version_details.json is defined and
+    minecraft_version_details.json.downloads.server is defined
+  tags:
+    - server
+    - download
+
+- name: Récupération de la version Fabric Loader
+  ansible.builtin.uri:
+    url: 'https://meta.fabricmc.net/v2/versions/loader/{{ minecraft_version }}'
+    method: GET
+    return_content: true
+    body_format: json
+    status_code: [200]
+    timeout: 30
+  register: fabric_loader_versions
+  ignore_errors: yes
+  until: fabric_loader_versions is defined and fabric_loader_versions.status == 200
+  retries: 5
+  delay: 3
+  when: minecraft_fabric_loader_version == 'latest'
+  tags:
+    - server
+    - download
+
+- name: Vérification que la version Fabric Loader a été récupérée
+  ansible.builtin.fail:
+    msg: "Impossible de récupérer la version Fabric Loader après 5 tentatives. Vérifiez la connexion réseau."
+  when: >
+    minecraft_fabric_loader_version == 'latest' and
+    (fabric_loader_versions is not defined or fabric_loader_versions.status != 200)
+  tags:
+    - server
+    - download
+
+- name: Définition de la version Fabric Loader depuis l'API
+  ansible.builtin.set_fact:
+    minecraft_fabric_loader_version: '{{ fabric_loader_versions.json[0].loader.version }}'
+  when: >
+    minecraft_fabric_loader_version == 'latest' and
+    fabric_loader_versions is defined and
+    fabric_loader_versions.json is defined and
+    fabric_loader_versions.json | length > 0
+  tags:
+    - server
+    - download
+
+- name: Récupération de l'URL de l'installer Fabric
+  ansible.builtin.uri:
+    url: 'https://meta.fabricmc.net/v2/versions/installer'
+    method: GET
+    return_content: true
+    body_format: json
+    status_code: [200]
+    timeout: 30
+  register: fabric_installer_versions
+  ignore_errors: yes
+  until: fabric_installer_versions is defined and fabric_installer_versions.status == 200
+  retries: 5
+  delay: 3
+  tags:
+    - server
+    - download
+
+- name: Vérification que l'URL de l'installer Fabric a été récupérée
+  ansible.builtin.fail:
+    msg: "Impossible de récupérer l'URL de l'installer Fabric après 5 tentatives. Vérifiez la connexion réseau."
+  when: fabric_installer_versions is not defined or fabric_installer_versions.status != 200
+  tags:
+    - server
+    - download
+
+- name: Définition de l'URL de l'installer Fabric
+  ansible.builtin.set_fact:
+    minecraft_fabric_loader_url: '{{ fabric_installer_versions.json[0].url }}'
+  when: >
+    fabric_installer_versions is defined and
+    fabric_installer_versions.json is defined and
+    fabric_installer_versions.json | length > 0
+  tags:
+    - server
+    - download

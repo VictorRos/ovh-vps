@@ -1,0 +1,22 @@
+---
+# Tâches pour télécharger un mod depuis Modrinth
+# Ce fichier est inclus dans une boucle depuis main.yml
+
+- name: Sélection de la version du mod {{ item.item.name }}
+  ansible.builtin.set_fact:
+    selected_mod_version: >-
+      {%- if item.item.version == "latest" -%}
+        {{ item.json[0] }}
+      {%- else -%}
+        {{ item.json | selectattr("version_number", "equalto", item.item.version) | list | first | default(item.json | selectattr("version_number", "regex", "^" + item.item.version) | list | first | default(item.json[0] if item.json | length > 0 else {})) }}
+      {%- endif -%}
+  when: item.status == 200 and item.json | length > 0
+
+- name: Téléchargement du fichier mod {{ item.item.name }}
+  ansible.builtin.get_url:
+    url: '{{ (selected_mod_version.files | selectattr("primary", "equalto", true) | list | first | default(selected_mod_version.files[0])).url }}'
+    dest: '{{ minecraft_data_dir }}/mods/{{ (selected_mod_version.files | selectattr("primary", "equalto", true) | list | first | default(selected_mod_version.files[0])).filename }}'
+    mode: '0644'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+  when: item.status == 200 and selected_mod_version is defined and selected_mod_version.files | length > 0

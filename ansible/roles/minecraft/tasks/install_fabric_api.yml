@@ -1,0 +1,53 @@
+---
+# Installation de Fabric API
+
+- name: Récupération de la version Fabric API depuis Modrinth
+  ansible.builtin.uri:
+    url: 'https://api.modrinth.com/v2/project/P7dR8mSH/version?game_versions=%5B%22{{ minecraft_version }}%22%5D&loaders=%5B%22fabric%22%5D'
+    method: GET
+    return_content: true
+    body_format: json
+  register: fabric_api_versions_result
+  tags:
+    - server
+    - download
+    - mods
+
+- name: Définition de la version Fabric API
+  ansible.builtin.set_fact:
+    minecraft_fabric_api_version: '{{ fabric_api_versions_result.json[0].version_number }}'
+    fabric_api_download_url: '{{ (fabric_api_versions_result.json[0].files | selectattr("primary", "equalto", true) | list | first | default(fabric_api_versions_result.json[0].files[0])).url }}'
+  when: >
+    fabric_api_versions_result is defined and
+    fabric_api_versions_result.json is defined and
+    fabric_api_versions_result.json | length > 0
+  tags:
+    - server
+    - download
+    - mods
+
+- name: Vérification de la présence de Fabric API
+  ansible.builtin.stat:
+    path: '{{ minecraft_data_dir }}/mods/fabric-api-{{ minecraft_fabric_api_version }}.jar'
+  register: fabric_api_file_stat
+  when: minecraft_fabric_api_version is defined
+  tags:
+    - server
+    - download
+    - mods
+
+- name: Téléchargement de Fabric API si nécessaire
+  ansible.builtin.get_url:
+    url: '{{ fabric_api_download_url }}'
+    dest: '{{ minecraft_data_dir }}/mods/fabric-api-{{ minecraft_fabric_api_version }}.jar'
+    mode: '0644'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+  when: >
+    minecraft_fabric_api_version is defined and
+    fabric_api_download_url is defined and
+    (not fabric_api_file_stat.stat.exists | default(true))
+  tags:
+    - server
+    - download
+    - mods

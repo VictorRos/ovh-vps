@@ -1,0 +1,31 @@
+---
+# Installation des mods depuis Modrinth
+
+- name: Installation des mods depuis Modrinth
+  block:
+    - name: Récupération des versions du mod depuis Modrinth
+      ansible.builtin.uri:
+        url: 'https://api.modrinth.com/v2/project/{{ item.project_id }}/version?game_versions=%5B%22{{ minecraft_version }}%22%5D&loaders=%5B%22fabric%22%5D'
+        method: GET
+        return_content: true
+        body_format: json
+        status_code: [200, 404]
+      register: mod_api_result
+      loop: '{{ minecraft_mods }}'
+      loop_control:
+        label: '{{ item.name }}'
+      ignore_errors: "{{ not item.required | default(true) }}"
+      failed_when: mod_api_result.status == 404 and (item.required | default(true))
+
+    - name: Téléchargement des mods
+      ansible.builtin.include_tasks: download_mod.yml
+      loop: '{{ mod_api_result.results }}'
+      loop_control:
+        label: '{{ item.item.name }}'
+      when: item.status == 200
+      ignore_errors: "{{ not item.item.required | default(true) }}"
+  when: minecraft_mods | length > 0
+  tags:
+    - server
+    - download
+    - mods

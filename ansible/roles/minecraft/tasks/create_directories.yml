@@ -1,0 +1,58 @@
+---
+# Création des répertoires nécessaires
+
+- name: Création du répertoire serveur
+  ansible.builtin.file:
+    path: '{{ minecraft_server_dir }}'
+    state: directory
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+- name: Création du répertoire de données Minecraft
+  ansible.builtin.file:
+    path: '{{ minecraft_data_dir }}'
+    state: directory
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+- name: Création du répertoire mods
+  ansible.builtin.file:
+    path: '{{ minecraft_data_dir }}/mods'
+    state: directory
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+    - mods
+
+- name: Création du répertoire logs
+  ansible.builtin.file:
+    path: '{{ minecraft_data_dir }}/logs'
+    state: directory
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+- name: Création du répertoire worlds
+  ansible.builtin.file:
+    path: '{{ minecraft_data_dir }}/worlds'
+    state: directory
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories

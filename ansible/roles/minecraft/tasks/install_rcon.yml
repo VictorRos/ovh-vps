@@ -1,0 +1,90 @@
+---
+# Installation de mcrcon (client RCON pour Minecraft) depuis les sources
+
+- name: Installation des dépendances de compilation pour mcrcon
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - gcc
+      - git
+    state: present
+  tags:
+    - setup
+    - dependencies
+    - packages
+    - rcon
+
+- name: Vérification de l'existence de mcrcon
+  ansible.builtin.command: which mcrcon
+  register: mcrcon_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - setup
+    - dependencies
+    - rcon
+
+- name: Vérification de la version de mcrcon si déjà installé
+  ansible.builtin.command: mcrcon -v
+  register: mcrcon_version_check
+  changed_when: false
+  failed_when: false
+  when: mcrcon_check.rc == 0
+  tags:
+    - setup
+    - dependencies
+    - rcon
+
+- name: Clonage du dépôt mcrcon
+  ansible.builtin.git:
+    repo: https://github.com/Tiiffi/mcrcon.git
+    dest: /tmp/mcrcon
+    version: v0.7.2
+    force: yes
+  when: mcrcon_check.rc != 0
+  tags:
+    - setup
+    - dependencies
+    - rcon
+
+- name: Compilation de mcrcon
+  ansible.builtin.command:
+    cmd: gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
+    chdir: /tmp/mcrcon
+  when: mcrcon_check.rc != 0
+  tags:
+    - setup
+    - dependencies
+    - rcon
+
+- name: Installation de mcrcon dans /usr/local/bin
+  ansible.builtin.copy:
+    src: /tmp/mcrcon/mcrcon
+    dest: /usr/local/bin/mcrcon
+    mode: '0755'
+    remote_src: true
+  when: mcrcon_check.rc != 0
+  tags:
+    - setup
+    - dependencies
+    - rcon
+
+- name: Vérification de l'installation de mcrcon
+  ansible.builtin.command: mcrcon -v
+  register: mcrcon_verify
+  changed_when: false
+  failed_when: false
+  tags:
+    - setup
+    - dependencies
+    - rcon
+
+- name: Nettoyage des fichiers temporaires
+  ansible.builtin.file:
+    path: /tmp/mcrcon
+    state: absent
+  when: mcrcon_check.rc != 0
+  tags:
+    - setup
+    - dependencies
+    - rcon

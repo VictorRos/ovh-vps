@@ -1,0 +1,67 @@
+---
+# Handlers pour le rôle minecraft
+
+- name: Téléchargement du serveur vanilla Minecraft
+  ansible.builtin.get_url:
+    url: '{{ minecraft_server_manifest.url }}'
+    dest: /tmp/minecraft-server-{{ minecraft_version }}.jar
+    mode: '0644'
+  when: >
+    minecraft_server_manifest is defined and
+    minecraft_server_manifest.url is defined and
+    minecraft_version is defined
+
+- name: Téléchargement de Fabric Loader
+  ansible.builtin.get_url:
+    url: '{{ minecraft_fabric_loader_url }}'
+    dest: /tmp/fabric-installer.jar
+    mode: '0644'
+  when: minecraft_fabric_loader_url is defined
+
+- name: Installation de Fabric sur le serveur vanilla
+  ansible.builtin.shell: |
+    runuser -u {{ minecraft_user }} -- env HOME={{ minecraft_home }} java -jar /tmp/fabric-installer.jar server -dir {{ minecraft_server_dir }} -mcversion {{ minecraft_version }} -loader {{ minecraft_fabric_loader_version }} -downloadMinecraft
+  args:
+    creates: '{{ minecraft_server_dir }}/fabric-server-launch.jar'
+  when: >
+    minecraft_version is defined and
+    minecraft_fabric_loader_version is defined and
+    minecraft_server_dir is defined
+
+- name: Correction des permissions des fichiers créés par Fabric
+  ansible.builtin.file:
+    path: '{{ minecraft_server_dir }}'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    recurse: true
+  when: minecraft_server_dir is defined
+
+- name: Création du fichier de version Fabric
+  ansible.builtin.copy:
+    content: '{{ minecraft_version }}-{{ minecraft_fabric_loader_version }}'
+    dest: '{{ minecraft_server_dir }}/.fabric_version'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0644'
+  when: >
+    minecraft_version is defined and
+    minecraft_fabric_loader_version is defined and
+    minecraft_server_dir is defined
+
+- name: Nettoyage des fichiers temporaires
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - /tmp/minecraft-server-{{ minecraft_version }}.jar
+    - /tmp/fabric-installer.jar
+
+- name: Rechargement de systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Redémarrage du serveur Minecraft
+  ansible.builtin.systemd:
+    name: minecraft
+    state: restarted
+  when: minecraft_service_state == 'started'

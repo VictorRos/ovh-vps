@@ -1,0 +1,81 @@
+---
+# Installation des dépendances système
+
+- name: Installation des dépendances pour Temurin
+  ansible.builtin.apt:
+    name:
+      - wget
+      - gnupg
+      - apt-transport-https
+    state: present
+  when: minecraft_java_version | int >= 21
+  tags:
+    - setup
+    - dependencies
+    - packages
+
+- name: Ajout de la clé GPG Eclipse Temurin
+  ansible.builtin.shell: |
+    wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null
+  when: minecraft_java_version | int >= 21
+  tags:
+    - setup
+    - dependencies
+    - packages
+
+- name: Détermination du code name Debian/Ubuntu
+  ansible.builtin.shell: awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release
+  register: debian_codename
+  changed_when: false
+  when: minecraft_java_version | int >= 21
+  tags:
+    - setup
+    - dependencies
+    - packages
+
+- name: Ajout du dépôt Eclipse Temurin
+  ansible.builtin.apt_repository:
+    repo: 'deb [arch=amd64] https://packages.adoptium.net/artifactory/deb {{ debian_codename.stdout }} main'
+    state: present
+    update_cache: true
+  when: minecraft_java_version | int >= 21
+  tags:
+    - setup
+    - dependencies
+    - packages
+
+- name: Installation de Java depuis Temurin (Java 21+)
+  ansible.builtin.apt:
+    name: 'temurin-{{ minecraft_java_version }}-jdk'
+    state: present
+  when: minecraft_java_version | int >= 21
+  tags:
+    - setup
+    - dependencies
+    - packages
+
+- name: Installation de Java OpenJDK depuis les dépôts standards (Java < 21)
+  ansible.builtin.apt:
+    name: 'openjdk-{{ minecraft_java_version }}-jdk'
+    state: present
+  when: minecraft_java_version | int < 21
+  tags:
+    - setup
+    - dependencies
+    - packages
+
+- name: Vérification de la version Java installée
+  ansible.builtin.command: java -version
+  register: java_version_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - setup
+    - dependencies
+
+- name: Installation de mcrcon (client RCON pour Minecraft)
+  ansible.builtin.include_tasks: install_rcon.yml
+  tags:
+    - setup
+    - dependencies
+    - rcon

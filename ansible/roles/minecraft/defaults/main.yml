@@ -1,0 +1,190 @@
+---
+# Variables par défaut pour le rôle minecraft
+# Toutes les variables sont préfixées par minecraft_ pour la conformité Ansible Lint
+
+# Variables système
+minecraft_user: minecraft
+minecraft_home: /home/{{ minecraft_user }}
+minecraft_server_dir: '{{ minecraft_home }}/server'
+minecraft_data_dir: /var/minecraft/data
+
+# Variables de version
+minecraft_version: 1.21.11
+minecraft_java_version: 21  # Minecraft 1.21.11 nécessite Java 21 minimum
+minecraft_fabric_loader_version: latest  # Sera déterminé automatiquement
+minecraft_fabric_api_version: latest  # Sera déterminé automatiquement
+
+# Variables des mods
+minecraft_mods:
+  #########################################################
+  #                      Performance                      #
+  #########################################################
+
+  # Ref: https://modrinth.com/mod/lithium/versions?l=fabric&g=1.21.11
+  - name: lithium
+    project_id: gvQqBUqZ
+    version: mc1.21.11-0.21.3-fabric
+    required: true
+  # Ref: https://modrinth.com/mod/krypton/versions?l=fabric&g=1.21.11
+  - name: krypton
+    project_id: fQEb0iXm
+    version: 0.2.10
+    required: true
+
+  #########################################################
+  #                    Quality of Life                    #
+  #########################################################
+
+  # Required by let-me-despawn
+  # Ref: https://modrinth.com/mod/almanac/versions?l=fabric&g=1.21.11
+  - name: almanac
+    project_id: Gi02250Z
+    version: 1.6.2
+    required: true
+  # Ref: https://modrinth.com/mod/appleskin/versions?l=fabric&g=1.21.11
+  - name: apple-skin
+    project_id: EsAfCjCV
+    version: 3.0.8+mc1.21.11
+    required: true
+  # Ref: https://modrinth.com/mod/balm/versions?l=fabric&g=1.21.11
+  - name: balm
+    project_id: MBAkmtvl
+    version: 21.11.6+fabric-1.21.11
+    required: true
+  # Ref: https://modrinth.com/mod/carry-on/versions?l=fabric&g=1.21.11
+  - name: carry-on
+    project_id: joEfVgkn
+    version: 2.9.0
+    required: true
+  # Ref: https://modrinth.com/mod/lmd/versions?l=fabric&g=1.21.11
+  - name: let-me-despawn
+    project_id: vE2FN5qn
+    version: 1.6.2
+    required: true
+  # Ref: https://modrinth.com/mod/netherportalfix/versions?l=fabric&g=1.21.11
+  - name: nether-portal-fix
+    project_id: nPZr02ET
+    version: 21.11.2+fabric-1.21.11
+    required: true
+  # Ref: https://modrinth.com/mod/placeholder-api/versions?l=fabric&g=1.21.11
+  - name: placeholder-api
+    project_id: eXts2L7r
+    version: 2.8.1+1.21.10
+    required: true
+
+  #########################################################
+  #                       Data packs                      #
+  #########################################################
+
+  # Ref: https://modrinth.com/datapack/dungeons-and-taverns/versions?l=fabric&g=1.21.11
+  # - name: dungeons-and-taverns
+  #   project_id: tpehi7ww
+  #   version: v5.1.0+mod
+  #   required: true
+  # Ref: https://modrinth.com/datapack/explorify/versions?l=fabric&g=1.21.11
+  - name: explorify
+    project_id: HSfsxuTo
+    version: 1.6.4
+    required: true
+  # Ref: https://modrinth.com/datapack/terralith/versions?l=fabric&g=1.21.11
+  - name: terralith
+    project_id: 8oi3bsk5
+    version: 2.5.14
+    required: true
+  # Ref: https://modrinth.com/datapack/veinminer/versions?l=fabric&g=1.21.11
+  - name: veinminer
+    project_id: OhduvhIc
+    version: 2.5.2
+    required: true
+  # Required by velminer
+  # Ref: https://modrinth.com/mod/fabric-language-kotlin/versions?l=fabric&g=1.21.11
+  - name: fabric-language-kotlin
+    project_id: Ha28R6CL
+    version: 1.13.8+kotlin.2.3.0
+    required: true
+  # Required by velminer
+  # Ref: https://modrinth.com/mod/silk/versions?l=fabric&g=1.21.11
+  - name: silk
+    project_id: aTaCgKLW
+    version: 1.11.5
+    required: true
+
+# Variables réseau
+minecraft_port: 25565
+minecraft_server_ip: ''  # À définir dans vars/production.yml
+
+# Variables de configuration serveur (selon documentation officielle Minecraft Wiki 1.21.9+)
+minecraft_server_name: Les Raisins
+minecraft_server_motd: Bienvenue parmis les raisins !
+minecraft_max_players: 4
+minecraft_gamemode: survival
+minecraft_difficulty: easy  # Valeur par défaut officielle
+minecraft_world_seed: ''
+minecraft_level_name: les-raisins
+minecraft_level_type: 'minecraft:normal'
+minecraft_whitelist_enabled: true
+minecraft_enforce_whitelist: true
+minecraft_view_distance: 10
+minecraft_simulation_distance: 10
+minecraft_max_world_size: 29999984
+minecraft_online_mode: true
+minecraft_enforce_secure_profile: true
+minecraft_generate_structures: true
+minecraft_force_gamemode: false
+minecraft_hardcore: false
+minecraft_max_tick_time: 60000
+minecraft_max_chained_neighbor_updates: 1000000
+minecraft_rate_limit: 0
+minecraft_network_compression_threshold: 256
+minecraft_broadcast_console_to_ops: true
+minecraft_broadcast_rcon_to_ops: true
+minecraft_enable_query: false
+minecraft_query_port: 25565
+minecraft_enable_rcon: true
+minecraft_rcon_port: 25575
+minecraft_rcon_password: ''  # Généré automatiquement si vide, ou à définir dans vars/production.yml
+minecraft_resource_pack: ''
+minecraft_resource_pack_id: ''
+minecraft_resource_pack_prompt: ''
+minecraft_resource_pack_sha1: ''
+minecraft_require_resource_pack: false
+minecraft_accepts_transfers: false
+minecraft_allow_flight: false
+minecraft_bug_report_link: ''
+minecraft_enable_code_of_conduct: false
+minecraft_enable_jmx_monitoring: false
+minecraft_enable_status: true
+minecraft_entity_broadcast_range_percentage: 100
+minecraft_function_permission_level: 2
+minecraft_generator_settings: '{}'
+minecraft_hide_online_players: false
+minecraft_initial_disabled_packs: ''
+minecraft_initial_enabled_packs: vanilla
+minecraft_log_ips: true
+minecraft_management_server_enabled: false
+minecraft_management_server_host: localhost
+minecraft_management_server_port: 0
+minecraft_management_server_secret: ''
+minecraft_management_server_tls_enabled: true
+minecraft_management_server_tls_keystore: ''
+minecraft_management_server_tls_keystore_password: ''
+minecraft_op_permission_level: 4
+minecraft_pause_when_empty_seconds: 60
+minecraft_player_idle_timeout: 0
+minecraft_prevent_proxy_connections: false
+minecraft_region_file_compression: deflate
+minecraft_spawn_protection: 16
+minecraft_status_heartbeat_interval: 0
+minecraft_sync_chunk_writes: true
+minecraft_text_filtering_config: ''
+minecraft_text_filtering_version: 0
+minecraft_use_native_transport: true
+
+# Variables JVM
+minecraft_memory_min: 4G  # Recommandé pour 4 joueurs avec mods Fabric
+minecraft_memory_max: 8G  # Recommandé pour 4 joueurs avec mods Fabric (marge de sécurité)
+minecraft_jvm_args: ''
+
+# Variables service
+minecraft_service_enabled: true
+minecraft_service_state: started

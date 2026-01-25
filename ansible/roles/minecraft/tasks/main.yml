@@ -1,0 +1,33 @@
+---
+# Tâches principales pour le rôle minecraft
+# Ce fichier orchestre l'exécution des différentes étapes
+
+- name: Configuration utilisateur et SSH
+  ansible.builtin.include_tasks: setup_user.yml
+
+- name: Installation des dépendances système
+  ansible.builtin.include_tasks: install_dependencies.yml
+
+- name: Création des répertoires
+  ansible.builtin.include_tasks: create_directories.yml
+
+- name: Récupération des versions Minecraft et Fabric
+  ansible.builtin.include_tasks: fetch_versions.yml
+
+- name: Installation de Fabric
+  ansible.builtin.include_tasks: install_fabric.yml
+
+- name: Installation de Fabric API
+  ansible.builtin.include_tasks: install_fabric_api.yml
+
+- name: Installation des mods
+  ansible.builtin.include_tasks: install_mods.yml
+
+- name: Configuration du serveur
+  ansible.builtin.include_tasks: configure_server.yml
+
+- name: Configuration système
+  ansible.builtin.include_tasks: configure_system.yml
+
+- name: Activation du service
+  ansible.builtin.include_tasks: activate_service.yml

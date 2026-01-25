@@ -1,0 +1,461 @@
+#!/usr/bin/env bash
+
+# Minecraft Server Management Script
+# Généré par Ansible - Ne pas modifier manuellement
+
+USERNAME="{{ minecraft_user }}"
+SERVER_DIR="{{ minecraft_server_dir }}"
+DATA_DIR="{{ minecraft_data_dir }}"
+{% if minecraft_server_ip | default('') != '' %}
+RCON_HOST="{{ minecraft_server_ip }}"
+{% else %}
+RCON_HOST="127.0.0.1"
+{% endif %}
+RCON_PORT="{{ minecraft_rcon_port }}"
+RCON_PASSWORD_FILE="${SERVER_DIR}/.rcon_password"
+SERVICE_NAME="minecraft"
+
+# Configuration Java
+MIN_MEMORY="{{ minecraft_memory_min }}"
+MAX_MEMORY="{{ minecraft_memory_max }}"
+JVM_ARGS="{{ minecraft_jvm_args }}"
+JAVA_VERSION="{{ minecraft_java_version }}"
+
+# Fonction d'aide
+usage() {
+    echo "Usage: $0 {start|stop|restart|status|command [cmd]|logs}"
+    echo ""
+    echo "Commands:"
+    echo "  start    - Démarre le serveur Minecraft"
+    echo "  stop     - Arrête le serveur Minecraft"
+    echo "  restart  - Redémarre le serveur Minecraft"
+    echo "  status   - Affiche le statut du serveur"
+    echo "  command  - Envoie une commande au serveur via RCON (ou mode interactif)"
+    echo "  logs     - Affiche les logs du serveur"
+    exit 1
+}
+
+# Vérification que le script est exécuté par le bon utilisateur
+if [ "$(whoami)" != "$USERNAME" ]; then
+    echo "Erreur: Ce script doit être exécuté par l'utilisateur $USERNAME" >&2
+    exit 1
+fi
+
+# Fonction pour trouver Java
+find_java() {
+    if [ -n "${JAVA_HOME}" ] && [ -f "${JAVA_HOME}/bin/java" ]; then
+        echo "${JAVA_HOME}/bin/java"
+    elif [ -f "/usr/lib/jvm/temurin-${JAVA_VERSION}-jdk-amd64/bin/java" ]; then
+        echo "/usr/lib/jvm/temurin-${JAVA_VERSION}-jdk-amd64/bin/java"
+    elif [ -f "/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64/bin/java" ]; then
+        echo "/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64/bin/java"
+    elif command -v java >/dev/null 2>&1; then
+        command -v java
+    else
+        echo ""
+    fi
+}
+
+# Fonction pour démarrer le serveur (appelée par systemd ou manuellement)
+start_server() {
+    # Si appelé directement (pas via systemctl), utiliser systemctl
+    if [ -z "$SERVER_SH_INTERNAL" ]; then
+        if is_running; then
+            echo "Le serveur Minecraft est déjà en cours d'exécution"
+            systemctl status "$SERVICE_NAME" --no-pager -l | head -5
+            return 1
+        fi
+        echo "Démarrage du serveur Minecraft..."
+        systemctl start "$SERVICE_NAME"
+        sleep 2
+        if is_running; then
+            echo "Serveur Minecraft démarré avec succès"
+            return 0
+        else
+            echo "Erreur: Le serveur n'a pas démarré correctement" >&2
+            systemctl status "$SERVICE_NAME" --no-pager -l || true
+            return 1
+        fi
+    fi
+
+    # Mode interne : démarrer réellement le processus Java
+    JAVA_BIN=$(find_java)
+    if [ -z "$JAVA_BIN" ]; then
+        echo "Erreur: Java n'est pas installé ou introuvable" >&2
+        exit 1
+    fi
+
+    # Vérifications
+    if [ ! -d "$SERVER_DIR" ]; then
+        echo "Erreur: Le répertoire serveur n'existe pas: $SERVER_DIR" >&2
+        exit 1
+    fi
+
+    if [ ! -d "$DATA_DIR" ]; then
+        echo "Erreur: Le répertoire de données n'existe pas: $DATA_DIR" >&2
+        exit 1
+    fi
+
+    if [ ! -f "${SERVER_DIR}/fabric-server-launch.jar" ]; then
+        echo "Erreur: Le fichier fabric-server-launch.jar n'existe pas" >&2
+        exit 1
+    fi
+
+    # Arguments JVM par défaut
+    DEFAULT_JVM_ARGS="-Xms${MIN_MEMORY} -Xmx${MAX_MEMORY} -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1"
+
+    # Arguments JVM personnalisés
+    if [ -n "${JVM_ARGS}" ]; then
+        CUSTOM_JVM_ARGS="${JVM_ARGS}"
+    else
+        CUSTOM_JVM_ARGS=""
+    fi
+
+    # Arguments du serveur
+    SERVER_ARGS="-nogui"
+
+    # Changement vers le répertoire de données
+    cd "${DATA_DIR}" || {
+        echo "Erreur: Impossible de changer vers le répertoire ${DATA_DIR}" >&2
+        exit 1
+    }
+
+    # Affichage des informations de démarrage
+    echo "Démarrage du serveur Minecraft..." >&2
+    echo "Utilisation de Java: ${JAVA_BIN}" >&2
+    echo "Répertoire de travail: $(pwd)" >&2
+    echo "Mémoire: ${MIN_MEMORY} min, ${MAX_MEMORY} max" >&2
+
+    # Démarrage du serveur Minecraft
+    # RCON est utilisé pour la console (solution standard)
+    "${JAVA_BIN}" ${DEFAULT_JVM_ARGS} ${CUSTOM_JVM_ARGS} -jar "${SERVER_DIR}/fabric-server-launch.jar" ${SERVER_ARGS}
+
+    # Code de sortie du processus Java
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -eq 0 ] || [ $EXIT_CODE -eq 130 ] || [ $EXIT_CODE -eq 143 ]; then
+        # Codes de sortie normaux : 0 (succès), 130 (SIGINT), 143 (SIGTERM)
+        exit 0
+    else
+        exit $EXIT_CODE
+    fi
+}
+
+# Fonction pour arrêter le serveur
+stop_server() {
+    # Mode interne : appelé par systemd ExecStop, juste envoyer "stop" via RCON et attendre
+    if [ -n "$SERVER_SH_INTERNAL" ]; then
+        JAVA_PID=$(pgrep -f "fabric-server-launch.jar" | head -1)
+        if [ -z "$JAVA_PID" ]; then
+            echo "Aucun processus serveur trouvé" >&2
+            exit 0
+        fi
+
+        echo "Arrêt du serveur Minecraft (PID: $JAVA_PID)..." >&2
+
+        # Tentative d'arrêt via RCON
+        RCON_SUCCESS=false
+        if [ -f "$RCON_PASSWORD_FILE" ]; then
+            RCON_PASSWORD=$(cat "$RCON_PASSWORD_FILE" 2>/dev/null)
+            if [ -n "$RCON_PASSWORD" ]; then
+                echo "Tentative d'arrêt via RCON..." >&2
+                # Test de connexion RCON avec une commande simple
+                if mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" "list" >/dev/null 2>&1; then
+                    # RCON fonctionne, envoyer la commande stop (sans redirection pour voir les erreurs)
+                    echo "Envoi de la commande 'stop' via RCON..." >&2
+                    mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" "stop" 2>&1
+                    RCON_EXIT_CODE=$?
+                    if [ $RCON_EXIT_CODE -eq 0 ]; then
+                        # La commande a été envoyée, attendre un peu pour voir si le processus commence à se terminer
+                        sleep 2
+                        # Vérifier si le processus est toujours en cours
+                        if ! kill -0 "$JAVA_PID" 2>/dev/null; then
+                            echo "Serveur arrêté immédiatement après la commande RCON" >&2
+                            exit 0
+                        fi
+                        # Le processus existe encore, mais la commande a peut-être été envoyée
+                        # Vérifier si le serveur répond encore à RCON (si non, il est en train de s'arrêter)
+                        if ! mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" "list" >/dev/null 2>&1; then
+                            echo "RCON ne répond plus, le serveur est en train de s'arrêter" >&2
+                            RCON_SUCCESS=true
+                        else
+                            echo "RCON répond encore, la commande 'stop' n'a peut-être pas fonctionné" >&2
+                        fi
+                    else
+                        echo "Échec de l'envoi de la commande 'stop' via RCON (code: $RCON_EXIT_CODE)" >&2
+                    fi
+                else
+                    echo "RCON non disponible ou non configuré, passage à SIGTERM" >&2
+                fi
+            else
+                echo "Mot de passe RCON vide, passage à SIGTERM" >&2
+            fi
+        else
+            echo "Fichier de mot de passe RCON introuvable, passage à SIGTERM" >&2
+        fi
+
+        # Attendre que le processus Java se termine (maximum 60 secondes si RCON a fonctionné)
+        if [ "$RCON_SUCCESS" = true ]; then
+            TIMEOUT=60
+            echo "Attente de l'arrêt propre du serveur (timeout: ${TIMEOUT}s)..." >&2
+            for i in $(seq 1 $TIMEOUT); do
+                if ! kill -0 "$JAVA_PID" 2>/dev/null; then
+                    echo "Serveur arrêté proprement après ${i}s" >&2
+                    exit 0
+                fi
+                # Afficher un point de progression toutes les 10 secondes
+                if [ $((i % 10)) -eq 0 ]; then
+                    echo "Attente... (${i}s/${TIMEOUT}s)" >&2
+                fi
+                sleep 1
+            done
+        else
+            # Si RCON n'a pas fonctionné, timeout plus court avant SIGTERM
+            TIMEOUT=5
+            echo "Attente courte (${TIMEOUT}s) avant SIGTERM..." >&2
+            for i in $(seq 1 $TIMEOUT); do
+                if ! kill -0 "$JAVA_PID" 2>/dev/null; then
+                    echo "Serveur arrêté" >&2
+                    exit 0
+                fi
+                sleep 1
+            done
+        fi
+
+        # Si toujours en cours après le timeout, envoyer SIGTERM
+        if kill -0 "$JAVA_PID" 2>/dev/null; then
+            echo "Le serveur ne répond pas, envoi de SIGTERM..." >&2
+            kill -TERM "$JAVA_PID" 2>/dev/null || true
+
+            # Attendre encore 15 secondes après SIGTERM
+            for i in {1..15}; do
+                if ! kill -0 "$JAVA_PID" 2>/dev/null; then
+                    echo "Serveur arrêté après SIGTERM (${i}s)" >&2
+                    exit 0
+                fi
+                sleep 1
+            done
+
+            # Si toujours en cours, envoyer SIGKILL (dernier recours)
+            if kill -0 "$JAVA_PID" 2>/dev/null; then
+                echo "Le serveur ne répond toujours pas, envoi de SIGKILL..." >&2
+                kill -KILL "$JAVA_PID" 2>/dev/null || true
+                sleep 2
+                if ! kill -0 "$JAVA_PID" 2>/dev/null; then
+                    echo "Serveur arrêté après SIGKILL" >&2
+                    exit 0
+                else
+                    echo "Erreur: Impossible d'arrêter le processus" >&2
+                    exit 1
+                fi
+            fi
+        fi
+        exit 0
+    fi
+
+    # Mode externe : appelé par l'utilisateur, utiliser systemctl
+    if ! is_running; then
+        echo "Le serveur Minecraft n'est pas en cours d'exécution"
+        return 0
+    fi
+
+    echo "Arrêt du serveur Minecraft..."
+    systemctl stop "$SERVICE_NAME"
+
+    # Attendre un peu pour que le processus se termine
+    sleep 2
+
+    if ! is_running; then
+        echo "Serveur Minecraft arrêté avec succès"
+        return 0
+    else
+        echo "Avertissement: Le serveur pourrait encore être en cours d'exécution" >&2
+        return 1
+    fi
+}
+
+# Fonction pour redémarrer le serveur
+restart_server() {
+    echo "Redémarrage du serveur Minecraft..."
+    stop_server
+    sleep 1
+    start_server
+}
+
+# Fonction pour vérifier si le serveur est en cours d'exécution
+is_running() {
+    systemctl is-active --quiet "$SERVICE_NAME"
+}
+
+# Fonction pour afficher le statut
+show_status() {
+    if is_running; then
+        echo "Serveur Minecraft: EN COURS D'EXÉCUTION"
+        systemctl status "$SERVICE_NAME" --no-pager -l
+    else
+        echo "Serveur Minecraft: ARRÊTÉ"
+        systemctl status "$SERVICE_NAME" --no-pager -l || true
+    fi
+}
+
+# Fonction pour envoyer une commande au serveur via RCON
+send_command() {
+    if ! is_running; then
+        echo "Erreur: Le serveur n'est pas en cours d'exécution" >&2
+        return 1
+    fi
+
+    if [ ! -f "$RCON_PASSWORD_FILE" ]; then
+        echo "Erreur: Le fichier de mot de passe RCON n'existe pas: $RCON_PASSWORD_FILE" >&2
+        echo "Astuce: Vérifiez que RCON est activé dans server.properties et que le serveur a été redémarré" >&2
+        return 1
+    fi
+
+    RCON_PASSWORD=$(cat "$RCON_PASSWORD_FILE" 2>/dev/null)
+    if [ -z "$RCON_PASSWORD" ]; then
+        echo "Erreur: Le mot de passe RCON est vide" >&2
+        return 1
+    fi
+
+    # Vérifier que RCON est activé dans server.properties
+    if [ -f "${DATA_DIR}/server.properties" ]; then
+        if ! grep -q "^enable-rcon=true" "${DATA_DIR}/server.properties" 2>/dev/null; then
+            echo "Erreur: RCON n'est pas activé dans server.properties" >&2
+            echo "Astuce: Activez RCON avec 'enable-rcon=true' et redémarrez le serveur" >&2
+            return 1
+        fi
+    fi
+
+    # Si des arguments sont fournis, envoyer la commande et quitter
+    if [ $# -gt 0 ]; then
+        # Détecter les commandes qui génèrent beaucoup de sortie (problème de fragmentation connu)
+        LONG_OUTPUT_COMMANDS="help"
+        COMMAND_LOWER=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+        
+        if echo "$LONG_OUTPUT_COMMANDS" | grep -qw "$COMMAND_LOWER"; then
+            echo "Note: La commande '$1' génère une réponse très longue." >&2
+            echo "À cause d'une limitation de mcrcon avec les réponses fragmentées," >&2
+            echo "utilisez le mode interactif pour voir la sortie complète:" >&2
+            echo "  $0 command" >&2
+            echo "" >&2
+            echo "Ou consultez les logs du serveur après avoir exécuté la commande." >&2
+            # Essayer quand même d'envoyer la commande (elle sera exécutée mais la réponse ne sera pas affichée)
+            mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" "$@" >/dev/null 2>&1 || true
+            echo "Commande envoyée. Consultez les logs avec 'server-logs' pour voir la réponse." >&2
+            return 0
+        fi
+
+        # Envoyer la commande via RCON
+        # Filtrer le warning "invalid packet size" qui est un problème connu avec mcrcon et les réponses fragmentées
+        OUTPUT=$(mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" "$@" 2>&1)
+        RCON_EXIT_CODE=$?
+
+        # Séparer les warnings de la sortie réelle
+        WARNINGS=$(echo "$OUTPUT" | grep "^Warning:" || true)
+        ACTUAL_OUTPUT=$(echo "$OUTPUT" | grep -v "^Warning:" || true)
+
+        # Afficher la sortie réelle (sans les warnings)
+        if [ -n "$ACTUAL_OUTPUT" ]; then
+            echo "$ACTUAL_OUTPUT"
+            # Vérifier si c'est un message d'erreur incomplet (contient "See below" ou "<--[HERE]")
+            if echo "$ACTUAL_OUTPUT" | grep -q "See below\|<--\[HERE\]"; then
+                echo "" >&2
+                echo "Note: Le message d'erreur semble incomplet." >&2
+                echo "Pour voir le message d'erreur complet, utilisez le mode interactif:" >&2
+                echo "  $0 command" >&2
+                echo "Puis tapez la commande dans le terminal interactif." >&2
+            fi
+            return 0
+        fi
+
+        # Si pas de sortie mais qu'on a des warnings, c'est le problème de fragmentation
+        if [ -n "$WARNINGS" ] && [ -z "$ACTUAL_OUTPUT" ]; then
+            echo "Erreur: Réponse RCON fragmentée (problème connu avec mcrcon et Fabric)" >&2
+            echo "La commande a été exécutée mais la réponse est trop longue pour être affichée." >&2
+            echo "Utilisez le mode interactif pour voir la sortie complète:" >&2
+            echo "  $0 command" >&2
+            return 0
+        fi
+
+        # Si code d'erreur et pas de sortie, c'est une vraie erreur
+        if [ $RCON_EXIT_CODE -ne 0 ]; then
+            echo "Erreur RCON (code: $RCON_EXIT_CODE)" >&2
+            if [ -n "$OUTPUT" ]; then
+                echo "Sortie:" >&2
+                echo "$OUTPUT" >&2
+            fi
+            echo "Vérifiez que:" >&2
+            echo "  1. RCON est activé dans server.properties (enable-rcon=true)" >&2
+            echo "  2. Le serveur a été redémarré après l'activation de RCON" >&2
+            echo "  3. Le port RCON ($RCON_PORT) n'est pas bloqué par le pare-feu" >&2
+            return $RCON_EXIT_CODE
+        fi
+
+        return 0
+    fi
+
+    # Sinon, mode interactif
+    echo "Console Minecraft RCON"
+    echo "Tapez 'quit' ou 'exit' pour quitter"
+    echo ""
+    mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" -t
+}
+
+# Fonction pour afficher les logs
+show_logs() {
+    # Vérifier si on veut voir les dernières lignes ou suivre en temps réel
+    if [ "$1" = "--tail" ] || [ "$1" = "-n" ]; then
+        LINES=${2:-100}
+        if [ -f "${DATA_DIR}/logs/latest.log" ]; then
+            tail -n "$LINES" "${DATA_DIR}/logs/latest.log"
+        else
+            journalctl -u "$SERVICE_NAME" -n "$LINES" --no-pager
+        fi
+        return 0
+    fi
+    
+    # Mode suivi en temps réel (par défaut)
+    if [ -f "${DATA_DIR}/logs/latest.log" ]; then
+        # Afficher les dernières lignes avant de suivre
+        echo "=== Dernières lignes du log ===" >&2
+        tail -n 50 "${DATA_DIR}/logs/latest.log" >&2
+        echo "" >&2
+        echo "=== Suivi en temps réel (Ctrl+C pour quitter) ===" >&2
+        tail -f "${DATA_DIR}/logs/latest.log"
+    else
+        echo "Fichier de log introuvable: ${DATA_DIR}/logs/latest.log" >&2
+        echo "Utilisation de journalctl..." >&2
+        # Afficher les dernières lignes avant de suivre
+        journalctl -u "$SERVICE_NAME" -n 50 --no-pager
+        echo "" >&2
+        echo "=== Suivi en temps réel (Ctrl+C pour quitter) ===" >&2
+        journalctl -u "$SERVICE_NAME" -f
+    fi
+}
+
+# Gestion des arguments
+case "$1" in
+    start)
+        start_server
+        ;;
+    stop)
+        stop_server
+        ;;
+    restart)
+        restart_server
+        ;;
+    status)
+        show_status
+        ;;
+    command)
+        shift
+        send_command "$@"
+        ;;
+    logs)
+        show_logs
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+exit $?

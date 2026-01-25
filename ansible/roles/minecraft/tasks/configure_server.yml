@@ -1,0 +1,118 @@
+---
+# Configuration du serveur (server.properties, eula.txt)
+
+- name: Génération du mot de passe RCON si nécessaire
+  ansible.builtin.shell: |
+    openssl rand -base64 32 | tr -d "=+/" | cut -c1-25
+  register: rcon_password_generated
+  changed_when: false
+  when: >
+    minecraft_enable_rcon | default(false) and
+    (minecraft_rcon_password | default('') == '')
+  tags:
+    - server
+    - config
+
+- name: Sauvegarde du mot de passe RCON généré
+  ansible.builtin.copy:
+    content: '{{ rcon_password_generated.stdout }}'
+    dest: '{{ minecraft_server_dir }}/.rcon_password'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0600'
+  when: >
+    minecraft_enable_rcon | default(false) and
+    (minecraft_rcon_password | default('') == '') and
+    rcon_password_generated.stdout is defined
+  tags:
+    - server
+    - config
+
+- name: Sauvegarde du mot de passe RCON fourni manuellement
+  ansible.builtin.copy:
+    content: '{{ minecraft_rcon_password }}'
+    dest: '{{ minecraft_server_dir }}/.rcon_password'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0600'
+  when: >
+    minecraft_enable_rcon | default(false) and
+    (minecraft_rcon_password | default('') != '')
+  tags:
+    - server
+    - config
+
+- name: Définition du mot de passe RCON à utiliser
+  ansible.builtin.set_fact:
+    minecraft_rcon_password_actual: >-
+      {{
+        minecraft_rcon_password | default('')
+        if minecraft_rcon_password | default('') != ''
+        else (rcon_password_generated.stdout | default(''))
+      }}
+  when: minecraft_enable_rcon | default(false)
+  tags:
+    - server
+    - config
+
+- name: Lecture du mot de passe RCON depuis le fichier si nécessaire
+  ansible.builtin.slurp:
+    src: '{{ minecraft_server_dir }}/.rcon_password'
+  register: rcon_password_file_content
+  when: >
+    minecraft_enable_rcon | default(false) and
+    (minecraft_rcon_password_actual | default('') == '')
+  failed_when: false
+  tags:
+    - server
+    - config
+
+- name: Définition du mot de passe RCON final
+  ansible.builtin.set_fact:
+    minecraft_rcon_password_final: >-
+      {{
+        minecraft_rcon_password_actual | default('')
+        if minecraft_rcon_password_actual | default('') != ''
+        else (rcon_password_file_content.content | b64decode | default('') | trim)
+      }}
+  when: minecraft_enable_rcon | default(false)
+  tags:
+    - server
+    - config
+
+- name: Vérification que le mot de passe RCON est défini
+  ansible.builtin.fail:
+    msg: "Le mot de passe RCON n'a pas pu être déterminé. Vérifiez que RCON est activé et que le mot de passe est généré ou fourni."
+  when: >
+    minecraft_enable_rcon | default(false) and
+    (minecraft_rcon_password_final | default('') == '')
+  tags:
+    - server
+    - config
+
+- name: Génération du fichier de configuration server.properties
+  ansible.builtin.template:
+    src: server.properties.j2
+    dest: '{{ minecraft_data_dir }}/server.properties'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0644'
+    backup: true
+  vars:
+    minecraft_rcon_password: '{{ minecraft_rcon_password_final | default("") }}'
+  notify: Redémarrage du serveur Minecraft
+  tags:
+    - server
+    - config
+
+- name: Génération du fichier EULA
+  ansible.builtin.template:
+    src: eula.txt.j2
+    dest: '{{ minecraft_data_dir }}/eula.txt'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0644'
+    backup: true
+  tags:
+    - server
+    - config

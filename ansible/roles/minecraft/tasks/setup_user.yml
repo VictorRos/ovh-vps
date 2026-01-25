@@ -1,0 +1,81 @@
+---
+# Configuration utilisateur, SSH et alias shell généraux
+
+- name: Création de l'utilisateur pour Minecraft
+  ansible.builtin.user:
+    name: '{{ minecraft_user }}'
+    create_home: true
+    shell: /bin/bash
+    system: false
+  tags:
+    - setup
+    - user
+
+- name: Création du répertoire .ssh pour l'utilisateur
+  ansible.builtin.file:
+    path: '{{ minecraft_home }}/.ssh'
+    state: directory
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0700'
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Détermination du chemin de la clé publique SSH
+  ansible.builtin.set_fact:
+    minecraft_ssh_public_key_path: '{{ ansible_ssh_private_key_file }}.pub'
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Vérification de l'existence de la clé publique SSH
+  ansible.builtin.stat:
+    path: '{{ minecraft_ssh_public_key_path }}'
+  register: minecraft_ssh_public_key_stat
+  delegate_to: localhost
+  become: false
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Ajout de la clé SSH publique aux authorized_keys
+  ansible.posix.authorized_key:
+    user: '{{ minecraft_user }}'
+    state: present
+    key: '{{ lookup("file", minecraft_ssh_public_key_path) }}'
+    comment: '{{ lookup("pipe", "whoami") }}@{{ lookup("pipe", "hostname") }}'
+  when: minecraft_ssh_public_key_stat.stat.exists
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Ajout des alias utiles dans .bashrc
+  ansible.builtin.blockinfile:
+    path: '{{ minecraft_home }}/.bashrc'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0644'
+    create: true
+    block: |
+      # Grep with colors
+      export GREP_COLOR='mt=31'
+      alias grep='grep --color=auto'
+
+      ## Shell
+      alias ll='ls -hal'
+      alias la='ls -A'
+      alias lh='ls -ah'
+      alias l='ls -CF'
+      alias lll='ls -lh | less'
+      alias llt='ls -altF'
+      alias sh-755='find -name "*.sh" | xargs chmod 755'
+      alias uuid='uuidgen | tr "[:upper:]" "[:lower:]"'
+    marker: '# {mark} ANSIBLE MANAGED BLOCK - General Aliases'
+  tags:
+    - setup
+    - config

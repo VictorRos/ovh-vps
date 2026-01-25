@@ -1,0 +1,194 @@
+---
+# Tâches pour le rôle minecraft_cleanup
+
+- name: Arrêt du service Minecraft
+  ansible.builtin.systemd:
+    name: minecraft
+    state: stopped
+    enabled: false
+  failed_when: false
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression du service systemd
+  ansible.builtin.file:
+    path: /etc/systemd/system/minecraft.service
+    state: absent
+  notify: Rechargement de systemd
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression de la configuration sudo
+  ansible.builtin.file:
+    path: /etc/sudoers.d/minecraft
+    state: absent
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression de la règle firewall Minecraft
+  community.general.ufw:
+    rule: allow
+    port: '{{ minecraft_cleanup_port }}'
+    proto: tcp
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression de la règle firewall RCON (localhost uniquement)
+  community.general.ufw:
+    rule: allow
+    port: '{{ minecraft_cleanup_rcon_port | default(25575) }}'
+    proto: tcp
+    from_ip: 127.0.0.1
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression complète du répertoire serveur
+  ansible.builtin.file:
+    path: '{{ minecraft_cleanup_server_dir }}'
+    state: absent
+  tags:
+    - cleanup
+    - files
+
+- name: Suppression sélective des fichiers de données (préserve les mondes dans worlds/, whitelist.json, banned-ips.json et banned-players.json)
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '{{ minecraft_cleanup_data_dir }}/.fabric'
+    - '{{ minecraft_cleanup_data_dir }}/config'
+    - '{{ minecraft_cleanup_data_dir }}/eula.txt'
+    - '{{ minecraft_cleanup_data_dir }}/fabric-server-launcher.properties'
+    - '{{ minecraft_cleanup_data_dir }}/libraries'
+    - '{{ minecraft_cleanup_data_dir }}/logs'
+    - '{{ minecraft_cleanup_data_dir }}/mods'
+    - '{{ minecraft_cleanup_data_dir }}/ops.json'
+    - '{{ minecraft_cleanup_data_dir }}/server-icon.png'
+    - '{{ minecraft_cleanup_data_dir }}/server.jar'
+    - '{{ minecraft_cleanup_data_dir }}/server.properties'
+    - '{{ minecraft_cleanup_data_dir }}/usercache.json'
+    - '{{ minecraft_cleanup_data_dir }}/versions'
+  failed_when: false
+  tags:
+    - cleanup
+    - files
+  # Note: Le répertoire worlds/, whitelist.json, banned-ips.json et banned-players.json sont préservés pour permettre une réinstallation ultérieure
+
+- name: Suppression des fichiers server.properties.* (backups, etc.)
+  ansible.builtin.find:
+    paths: '{{ minecraft_cleanup_data_dir }}'
+    patterns: 'server.properties.*'
+    file_type: file
+  register: server_properties_backups
+  tags:
+    - cleanup
+    - files
+
+- name: Suppression effective des fichiers server.properties.* trouvés
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: absent
+  loop: '{{ server_properties_backups.files | default([]) }}'
+  failed_when: false
+  tags:
+    - cleanup
+    - files
+
+- name: Suppression de l'utilisateur Minecraft
+  ansible.builtin.user:
+    name: '{{ minecraft_cleanup_user }}'
+    state: absent
+    remove: true
+    force: true
+  when: minecraft_cleanup_remove_user | default(false)
+  tags:
+    - cleanup
+    - user
+    - optional
+
+- name: Suppression des packages Java (optionnel)
+  ansible.builtin.apt:
+    name:
+      - temurin-{{ minecraft_cleanup_java_version }}-jdk
+      - openjdk-{{ minecraft_cleanup_java_version }}-jdk
+    state: absent
+    autoremove: true
+  when: minecraft_cleanup_remove_packages | default(false)
+  failed_when: false
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Détermination du code name Debian/Ubuntu pour suppression du dépôt Temurin
+  ansible.builtin.shell: awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release
+  register: debian_codename_cleanup
+  changed_when: false
+  when: minecraft_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Suppression du dépôt Eclipse Temurin (optionnel)
+  ansible.builtin.apt_repository:
+    repo: 'deb [arch=amd64] https://packages.adoptium.net/artifactory/deb {{ debian_codename_cleanup.stdout }} main'
+    state: absent
+  when: minecraft_cleanup_remove_packages | default(false) and debian_codename_cleanup.stdout is defined
+  failed_when: false
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Suppression de la clé GPG Eclipse Temurin (optionnel)
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d/adoptium.gpg
+    state: absent
+  when: minecraft_cleanup_remove_packages | default(false)
+  failed_when: false
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Suppression de mcrcon (client RCON)
+  ansible.builtin.file:
+    path: /usr/local/bin/mcrcon
+    state: absent
+  failed_when: false
+  tags:
+    - cleanup
+    - packages
+    - rcon
+
+- name: Nettoyage des fichiers temporaires
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - /tmp/minecraft-server-{{ minecraft_version | default('1.21.11') }}.jar
+    - /tmp/fabric-installer.jar
+    - /tmp/mcrcon
+  failed_when: false
+  tags:
+    - cleanup
+    - temp
+
+- name: Mise à jour du cache APT après nettoyage
+  ansible.builtin.apt:
+    update_cache: true
+  when: minecraft_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional

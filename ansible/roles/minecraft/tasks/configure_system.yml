@@ -1,0 +1,91 @@
+---
+# Configuration système (pare-feu, scripts, systemd, sudoers, alias)
+
+- name: Configuration du pare-feu pour Minecraft
+  community.general.ufw:
+    rule: allow
+    port: '{{ minecraft_port }}'
+    proto: tcp
+    comment: Minecraft Server TCP
+  tags:
+    - server
+    - config
+    - firewall
+
+- name: Configuration du pare-feu pour RCON (localhost uniquement)
+  community.general.ufw:
+    rule: allow
+    port: '{{ minecraft_rcon_port }}'
+    proto: tcp
+    from_ip: 127.0.0.1
+    comment: Minecraft RCON (localhost only)
+  when: minecraft_enable_rcon | default(false)
+  tags:
+    - server
+    - config
+    - firewall
+
+- name: Génération du script de gestion du serveur (server.sh)
+  ansible.builtin.template:
+    src: server.sh.j2
+    dest: '{{ minecraft_server_dir }}/server.sh'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0755'
+    backup: true
+  tags:
+    - server
+    - config
+    - scripts
+
+- name: Création du service systemd
+  ansible.builtin.template:
+    src: minecraft.service.j2
+    dest: /etc/systemd/system/minecraft.service
+    mode: '0644'
+    backup: true
+  notify: Rechargement de systemd
+  tags:
+    - server
+    - config
+    - service
+
+- name: Configuration sudo pour permettre à minecraft de gérer son service
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/minecraft
+    mode: '0440'
+    owner: root
+    group: root
+    content: |
+      # Permet à l'utilisateur minecraft de gérer son propre service
+      {{ minecraft_user }} ALL=(ALL) NOPASSWD: /bin/systemctl start minecraft, /bin/systemctl stop minecraft, /bin/systemctl restart minecraft, /bin/systemctl status minecraft, /bin/systemctl reload minecraft
+    validate: visudo -cf %s
+  tags:
+    - server
+    - config
+    - service
+
+- name: Ajout des alias de gestion du serveur dans .bashrc
+  ansible.builtin.blockinfile:
+    path: '{{ minecraft_home }}/.bashrc'
+    owner: '{{ minecraft_user }}'
+    group: '{{ minecraft_user }}'
+    mode: '0644'
+    create: true
+    block: |
+      # Fonctions et alias pour la gestion du serveur Minecraft
+      alias server-restart='sudo systemctl restart minecraft'
+      alias server-status='sudo systemctl status minecraft'
+      alias server-stop='sudo systemctl stop minecraft'
+      alias server-start='sudo systemctl start minecraft'
+      alias server-logs='{{ minecraft_server_dir }}/server.sh logs'
+
+      # Utiliser une fonction pour server-console afin de mieux gérer les arguments
+      server-console() {
+        {{ minecraft_server_dir }}/server.sh command "$@"
+      }
+    marker: '# {mark} ANSIBLE MANAGED BLOCK - Minecraft Server'
+  tags:
+    - server
+    - config
+    - service

@@ -11,6 +11,12 @@
   - [Installation](#installation)
   - [Service Management](#service-management)
   - [Désinstallation](#désinstallation)
+- [Minecraft](#minecraft)
+  - [Variables Ansible de Minecraft](#variables-ansible-de-minecraft)
+  - [Installation](#installation-1)
+  - [Gestion du serveur](#gestion-du-serveur)
+  - [Limitations connues de RCON](#limitations-connues-de-rcon)
+  - [Désinstallation](#désinstallation-1)
 
 ## Premières étapes
 
@@ -155,6 +161,82 @@ sudo systemctl status vintage-story
 # Lancer le playbook de désinstallation de Vintage Story
 ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story-cleanup.yml
 ```
+
+## Minecraft
+
+### Variables Ansible de Minecraft
+
+Fichier : `ansible/vars/production.yml`
+
+```shell
+# Configuration réseau Minecraft
+minecraft_server_ip: X.X.X.X # IP publique du serveur
+minecraft_port: 25565 # Port du serveur (par défaut)
+minecraft_rcon_password: '' # Optionnel : si vide, un mot de passe sera généré automatiquement
+```
+
+### Installation
+
+```shell
+# Lancer le playbook d'installation de Minecraft avec Fabric
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft.yml
+```
+
+### Gestion du serveur
+
+Le rôle Minecraft installe des alias et fonctions pour faciliter la gestion du serveur. Connectez-vous en tant qu'utilisateur `minecraft` pour les utiliser :
+
+```shell
+# Démarrer le serveur
+server-start
+
+# Arrêter le serveur
+server-stop
+
+# Redémarrer le serveur
+server-restart
+
+# Vérifier le statut du serveur
+server-status
+
+# Envoyer une commande au serveur via RCON
+server-console "list"
+server-console "whitelist list"
+server-console "op NomDuJoueur"
+server-console "deop NomDuJoueur"
+server-console "stop"
+
+# Mode interactif RCON (pour les commandes avec réponses longues)
+server-console
+# Puis tapez vos commandes dans le terminal interactif
+
+# Afficher les logs du serveur
+server-logs
+```
+
+**Note importante** : Les alias `server-start`, `server-stop`, `server-restart`, et `server-status` utilisent `systemctl` directement. `server-console` et `server-logs` utilisent le script `server.sh` qui gère RCON.
+
+### Limitations connues de RCON
+
+Le client RCON utilisé (`mcrcon`) a des limitations connues avec les serveurs Fabric :
+
+- **Réponses fragmentées** : Les commandes avec des réponses très longues (comme `/help`) peuvent ne pas fonctionner correctement à cause d'un problème de fragmentation des paquets RCON.
+- **Messages d'erreur tronqués** : Certains messages d'erreur peuvent être incomplets.
+
+**Solutions alternatives** :
+- Pour les commandes avec beaucoup de sortie, utilisez le mode interactif : `server-console` (sans arguments)
+- Pour voir les réponses complètes, consultez les logs : `server-logs`
+- Pour la whitelist, modifiez directement `/var/minecraft/data/whitelist.json` puis utilisez `server-console "whitelist reload"`
+- Pour les opérateurs (admins), modifiez directement `/var/minecraft/data/ops.json`
+
+### Désinstallation
+
+```shell
+# Lancer le playbook de désinstallation de Minecraft
+ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft-cleanup.yml
+```
+
+**Note** : Par défaut, le cleanup préserve les mondes dans `/var/minecraft/data/worlds/`, ainsi que `whitelist.json`, `banned-ips.json`, et `banned-players.json` pour permettre une réinstallation ultérieure sans perdre les données.
 
 <!-- Links -->
 
