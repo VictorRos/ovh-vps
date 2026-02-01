@@ -100,7 +100,6 @@
     backup: true
   vars:
     minecraft_rcon_password: '{{ minecraft_rcon_password_final | default("") }}'
-  notify: Redémarrage du serveur Minecraft
   tags:
     - server
     - config

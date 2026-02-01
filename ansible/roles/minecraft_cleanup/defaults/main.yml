@@ -5,7 +5,7 @@
 minecraft_cleanup_user: minecraft
 minecraft_cleanup_home: /home/{{ minecraft_cleanup_user }}
 minecraft_cleanup_server_dir: '{{ minecraft_cleanup_home }}/server'
-minecraft_cleanup_data_dir: /var/minecraft/data
+minecraft_cleanup_data_dir: /var/games/minecraft/data
 minecraft_cleanup_port: '{{ minecraft_port | default(25565) }}'
 minecraft_cleanup_rcon_port: '{{ minecraft_rcon_port | default(25575) }}'
 minecraft_cleanup_java_version: '{{ minecraft_java_version | default(21) }}'

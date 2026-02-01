@@ -189,9 +189,9 @@
     - server
     - download
 
-- name: Copie du fichier de configuration avancée
-  ansible.builtin.copy:
-    src: servermagicnumbers.json
+- name: Génération du fichier de configuration avancée servermagicnumbers
+  ansible.builtin.template:
+    src: servermagicnumbers.json.j2
     dest: '{{ vintage_story_world_dir }}/servermagicnumbers.json'
     owner: '{{ vintage_story_user }}'
     group: '{{ vintage_story_user }}'
@@ -295,25 +295,10 @@
     - scripts
 
 - name: Création du service systemd
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: vintage_story.service.j2
     dest: /etc/systemd/system/vintage-story.service
     mode: '0644'
-    content: |
-      [Unit]
-      Description=Vintage Story Server
-      After=network.target
-
-      [Service]
-      Type=forking
-      User={{ vintage_story_user }}
-      Group={{ vintage_story_user }}
-      WorkingDirectory={{ vintage_story_server_dir }}
-      ExecStart={{ vintage_story_server_dir }}/server.sh start
-      ExecStop={{ vintage_story_server_dir }}/server.sh stop
-      RemainAfterExit=yes
-
-      [Install]
-      WantedBy=multi-user.target
   notify: Rechargement de systemd
   tags:
     - server
@@ -343,6 +328,9 @@
     mode: '0644'
     create: true
     block: |
+      # Variables d'environnement
+      export GAME_DATA_DIR='{{ vintage_story_world_dir }}'
+
       # Alias pour la gestion du serveur Vintage Story
       alias server-restart='sudo systemctl restart vintage-story'
       alias server-status='sudo systemctl status vintage-story'

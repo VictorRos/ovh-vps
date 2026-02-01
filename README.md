@@ -226,8 +226,8 @@ Le client RCON utilisé (`mcrcon`) a des limitations connues avec les serveurs F
 **Solutions alternatives** :
 - Pour les commandes avec beaucoup de sortie, utilisez le mode interactif : `server-console` (sans arguments)
 - Pour voir les réponses complètes, consultez les logs : `server-logs`
-- Pour la whitelist, modifiez directement `/var/minecraft/data/whitelist.json` puis utilisez `server-console "whitelist reload"`
-- Pour les opérateurs (admins), modifiez directement `/var/minecraft/data/ops.json`
+- Pour la whitelist, modifiez directement `/var/games/minecraft/data/whitelist.json` puis utilisez `server-console "whitelist reload"`
+- Pour les opérateurs (admins), modifiez directement `/var/games/minecraft/data/ops.json`
 
 ### Désinstallation
 
@@ -236,7 +236,7 @@ Le client RCON utilisé (`mcrcon`) a des limitations connues avec les serveurs F
 ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-minecraft-cleanup.yml
 ```
 
-**Note** : Par défaut, le cleanup préserve les mondes dans `/var/minecraft/data/worlds/`, ainsi que `whitelist.json`, `banned-ips.json`, et `banned-players.json` pour permettre une réinstallation ultérieure sans perdre les données.
+**Note** : Par défaut, le cleanup préserve les mondes dans `/var/games/minecraft/data/worlds/`, ainsi que `whitelist.json`, `banned-ips.json`, et `banned-players.json` pour permettre une réinstallation ultérieure sans perdre les données.
 
 <!-- Links -->
 

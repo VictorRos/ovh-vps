@@ -73,6 +73,9 @@
     mode: '0644'
     create: true
     block: |
+      # Variables d'environnement
+      export GAME_DATA_DIR='{{ minecraft_data_dir }}'
+
       # Fonctions et alias pour la gestion du serveur Minecraft
       alias server-restart='sudo systemctl restart minecraft'
       alias server-status='sudo systemctl status minecraft'

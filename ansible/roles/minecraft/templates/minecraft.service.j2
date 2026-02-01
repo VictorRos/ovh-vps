@@ -9,12 +9,11 @@ Group={{ minecraft_user }}
 WorkingDirectory={{ minecraft_data_dir }}
 ExecStart=/bin/bash -c 'SERVER_SH_INTERNAL=1 {{ minecraft_server_dir }}/server.sh start'
 ExecStop=/bin/bash -c 'SERVER_SH_INTERNAL=1 {{ minecraft_server_dir }}/server.sh stop'
+RemainAfterExit=yes
 TimeoutStopSec=90
 KillMode=mixed
 KillSignal=SIGTERM
 SuccessExitStatus=0 143
-Restart=on-failure
-RestartSec=10
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=minecraft

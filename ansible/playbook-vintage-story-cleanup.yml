@@ -10,7 +10,7 @@
 #
 # === PROTECTION DES SAUVEGARDES ===
 # Les données du monde ({{ vintage_story_cleanup_world_dir }}) sont automatiquement PRÉSERVÉES
-# Pour supprimer manuellement les données : sudo rm -rf /var/vintagestory/data
+# Pour supprimer manuellement les données : sudo rm -rf /var/games/vintagestory/data
 #
 - name: Nettoyage complet de l'installation Vintage Story
   hosts: vintage_story

@@ -21,7 +21,7 @@
 # - Les mondes dans {{ minecraft_cleanup_data_dir }}/worlds/
 #
 # Pour supprimer AUSSI les mondes, modifiez le rôle minecraft_cleanup ou supprimez
-# manuellement : sudo rm -rf /var/minecraft/data/worlds
+# manuellement : sudo rm -rf /var/games/minecraft/data/worlds
 #
 - name: Nettoyage complet de l'installation Minecraft
   hosts: minecraft

@@ -1,0 +1,34 @@
+[Unit]
+Description=Vintage Story Server
+After=network.target
+
+[Service]
+Type=forking
+User={{ vintage_story_user }}
+Group={{ vintage_story_user }}
+WorkingDirectory={{ vintage_story_server_dir }}
+ExecStart={{ vintage_story_server_dir }}/server.sh start
+ExecStop={{ vintage_story_server_dir }}/server.sh stop
+RemainAfterExit=yes
+TimeoutStopSec=90
+KillMode=mixed
+KillSignal=SIGTERM
+SuccessExitStatus=0 143
+# StandardOutput=journal
+# StandardError=journal
+SyslogIdentifier=vintage-story
+
+# Limites système
+LimitNOFILE=65536
+MemoryMax={{ vintage_story_memory_max }}
+
+# Sécurité
+NoNewPrivileges=true
+PrivateTmp=true
+# TODO: Add system writable paths to ReadWritePaths
+ProtectSystem=false
+ProtectHome=read-only
+ReadWritePaths={{ vintage_story_world_dir }} {{ vintage_story_server_dir }}
+
+[Install]
+WantedBy=multi-user.target

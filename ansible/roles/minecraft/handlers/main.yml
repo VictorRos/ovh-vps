@@ -59,9 +59,3 @@
 - name: Rechargement de systemd
   ansible.builtin.systemd:
     daemon_reload: true
-
-- name: Redémarrage du serveur Minecraft
-  ansible.builtin.systemd:
-    name: minecraft
-    state: restarted
-  when: minecraft_service_state == 'started'

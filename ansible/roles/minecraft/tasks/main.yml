@@ -28,6 +28,3 @@
 
 - name: Configuration système
   ansible.builtin.include_tasks: configure_system.yml
-
-- name: Activation du service
-  ansible.builtin.include_tasks: activate_service.yml

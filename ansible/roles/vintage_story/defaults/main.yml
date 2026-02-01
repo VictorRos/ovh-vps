@@ -5,7 +5,7 @@
 vintage_story_user: vintagestory
 vintage_story_home: /home/{{ vintage_story_user }}
 vintage_story_server_dir: '{{ vintage_story_home }}/server'
-vintage_story_world_dir: /var/vintagestory/data
+vintage_story_world_dir: /var/games/vintagestory/data
 vintage_story_version: 1.21.6
 
 # Configuration serveur personnalisable
@@ -117,3 +117,33 @@ vintage_story_server_identifier: 7b156115-ef51-45d3-9d27-b638d41a1057
 vintage_story_temp_ip_block: false
 vintage_story_verify_player_auth: true
 vintage_story_whitelist_mode: 2
+
+# Configuration servermagicnumbers (paramètres CPU/réseau du serveur Vintage Story)
+vintage_story_smn_default_entity_tracking_range: 4
+vintage_story_smn_default_simulation_range: 128
+vintage_story_smn_request_chunk_columns_queue_size: 4000
+vintage_story_smn_ready_chunks_queue_size: 400
+vintage_story_smn_chunks_columns_to_request_per_tick: 8
+vintage_story_smn_chunks_to_send_per_tick: 256
+vintage_story_smn_chunk_request_tick_time: 15
+vintage_story_smn_chunk_columns_to_generate_per_thread_tick: 40
+vintage_story_smn_server_auto_save: 300
+vintage_story_smn_spawn_chunks_width: 8
+vintage_story_smn_tracked_entities_per_client: 3000
+vintage_story_smn_calendar_packet_second_interval: 60
+vintage_story_smn_chunk_unload_interval: 15000
+vintage_story_smn_uncompressed_chunk_ttl: 30000
+vintage_story_smn_compressed_chunk_ttl: 90000
+vintage_story_smn_player_desync_tolerance: 0.04
+vintage_story_smn_player_desync_max_intervalls: 20.0
+vintage_story_smn_chunk_thread_tick_time: 5
+vintage_story_smn_anti_abuse_max_walk_blocks_per_200ms: 5
+vintage_story_smn_anti_abuse_max_fly_suspicions: 5
+vintage_story_smn_anti_abuse_max_tele_suspicions: 10
+vintage_story_smn_max_physics_threads: 2
+vintage_story_smn_max_worldgen_threads: 2
+vintage_story_smn_max_entity_spawns_per_tick: 10
+vintage_story_smn_server_magic_num_version: '1.3'
+
+# Limite mémoire systemd (MemoryMax), comme Minecraft (8 Go)
+vintage_story_memory_max: 8G

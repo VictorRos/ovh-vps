@@ -5,6 +5,6 @@
 vintage_story_cleanup_user: vintagestory
 vintage_story_cleanup_home: /home/{{ vintage_story_cleanup_user }}
 vintage_story_cleanup_server_dir: '{{ vintage_story_cleanup_home }}/server'
-vintage_story_cleanup_world_dir: /var/vintagestory/data
+vintage_story_cleanup_world_dir: /var/games/vintagestory/data
 vintage_story_cleanup_port: '{{ vintage_story_port | default(42420) }}'
 vintage_story_cleanup_remove_packages: false

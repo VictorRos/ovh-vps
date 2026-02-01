@@ -6,7 +6,7 @@
 minecraft_user: minecraft
 minecraft_home: /home/{{ minecraft_user }}
 minecraft_server_dir: '{{ minecraft_home }}/server'
-minecraft_data_dir: /var/minecraft/data
+minecraft_data_dir: /var/games/minecraft/data
 
 # Variables de version
 minecraft_version: 1.21.11
@@ -184,7 +184,3 @@ minecraft_use_native_transport: true
 minecraft_memory_min: 4G  # Recommandé pour 4 joueurs avec mods Fabric
 minecraft_memory_max: 8G  # Recommandé pour 4 joueurs avec mods Fabric (marge de sécurité)
 minecraft_jvm_args: ''
-
-# Variables service
-minecraft_service_enabled: true
-minecraft_service_state: started
