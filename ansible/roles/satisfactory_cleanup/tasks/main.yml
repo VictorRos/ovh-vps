@@ -1,0 +1,118 @@
+---
+# Tâches pour le rôle satisfactory_cleanup
+
+- name: Arrêt du service Satisfactory
+  ansible.builtin.systemd:
+    name: satisfactory
+    state: stopped
+    enabled: false
+  failed_when: false
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression du service systemd
+  ansible.builtin.file:
+    path: /etc/systemd/system/satisfactory.service
+    state: absent
+  notify: Rechargement de systemd
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression de la configuration sudo
+  ansible.builtin.file:
+    path: /etc/sudoers.d/satisfactory
+    state: absent
+  tags:
+    - cleanup
+    - service
+
+- name: Suppression des tâches cron de gestion automatique du serveur
+  ansible.builtin.cron:
+    name: '{{ item }}'
+    state: absent
+    user: '{{ satisfactory_cleanup_user }}'
+  loop:
+    - Démarrage serveur Satisfactory - Semaine à 17h
+    - Démarrage serveur Satisfactory - Weekend à 8h
+    - Arrêt serveur Satisfactory - Tous les jours à 4h
+  tags:
+    - cleanup
+    - cron
+
+- name: Suppression de la règle firewall — port jeu UDP
+  community.general.ufw:
+    rule: allow
+    port: '{{ satisfactory_cleanup_game_port }}'
+    proto: udp
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression de la règle firewall — port jeu TCP
+  community.general.ufw:
+    rule: allow
+    port: '{{ satisfactory_cleanup_game_port }}'
+    proto: tcp
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression de la règle firewall — reliable port TCP
+  community.general.ufw:
+    rule: allow
+    port: '{{ satisfactory_cleanup_reliable_port }}'
+    proto: tcp
+    delete: true
+  failed_when: false
+  tags:
+    - cleanup
+    - firewall
+
+- name: Suppression complète du répertoire serveur
+  ansible.builtin.file:
+    path: '{{ satisfactory_cleanup_server_dir }}'
+    state: absent
+  tags:
+    - cleanup
+    - server
+    - directories
+    - download
+
+- name: Suppression de l'utilisateur Satisfactory
+  ansible.builtin.user:
+    name: '{{ satisfactory_cleanup_user }}'
+    state: absent
+    remove: true
+    force: true
+  tags:
+    - cleanup
+    - user
+    - ssh
+
+- name: Suppression de steamcmd et libsdl2 (optionnel)
+  ansible.builtin.apt:
+    name:
+      - steamcmd
+      - libsdl2-2.0-0:i386
+    state: absent
+    autoremove: true
+  when: satisfactory_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional
+
+- name: Mise à jour du cache APT après nettoyage (optionnel)
+  ansible.builtin.apt:
+    update_cache: true
+  when: satisfactory_cleanup_remove_packages | default(false)
+  tags:
+    - cleanup
+    - packages
+    - optional

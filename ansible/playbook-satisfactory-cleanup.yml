@@ -1,0 +1,20 @@
+---
+# Commande pour exécuter le playbook
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory-cleanup.yml
+#
+# Simulation complète sans modifications
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory-cleanup.yml --check
+#
+# Avec plus de détails sur ce qui serait changé
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory-cleanup.yml --check --diff
+#
+# === PROTECTION DES SAUVEGARDES ===
+# Les données de la partie ({{ satisfactory_cleanup_data_dir }}) sont automatiquement PRÉSERVÉES
+# Pour supprimer manuellement les données :
+# sudo rm -rf /home/satisfactory/.config/Epic/FactoryGame/Saved
+#
+- name: Nettoyage complet de l'installation Satisfactory
+  hosts: satisfactory
+  become: true
+  roles:
+    - satisfactory_cleanup

@@ -1,0 +1,387 @@
+---
+# Tâches pour le rôle satisfactory
+
+- name: Création de l'utilisateur pour Satisfactory
+  ansible.builtin.user:
+    name: '{{ satisfactory_user }}'
+    create_home: true
+    shell: /bin/bash
+    system: false
+  tags:
+    - setup
+    - user
+
+- name: Création du répertoire .ssh pour l'utilisateur
+  ansible.builtin.file:
+    path: '{{ satisfactory_home }}/.ssh'
+    state: directory
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0700'
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Détermination du chemin de la clé publique SSH
+  ansible.builtin.set_fact:
+    satisfactory_ssh_public_key_path: '{{ ansible_ssh_private_key_file }}.pub'
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Vérification de l'existence de la clé publique SSH
+  ansible.builtin.stat:
+    path: '{{ satisfactory_ssh_public_key_path }}'
+  register: satisfactory_ssh_public_key_stat
+  delegate_to: localhost
+  become: false
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Ajout de la clé SSH publique aux authorized_keys
+  ansible.posix.authorized_key:
+    user: '{{ satisfactory_user }}'
+    state: present
+    key: '{{ lookup("file", satisfactory_ssh_public_key_path) }}'
+    comment: '{{ lookup("pipe", "whoami") }}@{{ lookup("pipe", "hostname") }}'
+  when: satisfactory_ssh_public_key_stat.stat.exists
+  tags:
+    - setup
+    - user
+    - ssh
+
+- name: Ajout des alias utiles dans .bashrc
+  ansible.builtin.blockinfile:
+    path: '{{ satisfactory_home }}/.bashrc'
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0644'
+    create: true
+    block: |
+      # Grep with colors
+      export GREP_COLOR='mt=31'
+      alias grep='grep --color=auto'
+
+      ## Shell
+      alias ll='ls -hal'
+      alias la='ls -A'
+      alias lh='ls -ah'
+      alias l='ls -CF'
+      alias lll='ls -lh | less'
+      alias llt='ls -altF'
+    marker: '# {mark} ANSIBLE MANAGED BLOCK - General Aliases'
+  tags:
+    - setup
+
+# SteamCMD requiert l'architecture i386 sur Debian/Ubuntu
+- name: Activation de l'architecture i386
+  ansible.builtin.command: dpkg --add-architecture i386
+  args:
+    creates: /var/lib/dpkg/arch
+  tags:
+    - setup
+    - dependencies
+
+# steamcmd est dans le dépôt non-free de Debian, non activé par défaut
+- name: Activation du dépôt non-free Debian (requis pour steamcmd)
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb http://deb.debian.org/debian
+      {{ ansible_distribution_release }}
+      main contrib non-free non-free-firmware
+    state: present
+    filename: debian-non-free
+    update_cache: true
+  tags:
+    - setup
+    - dependencies
+
+# steamcmd nécessite l'acceptation de la licence Steam via debconf
+# Sans ces deux tâches, le script de pré-installation refuse et fait échouer apt
+- name: Pré-acceptation de la licence Steam pour steamcmd (question)
+  ansible.builtin.debconf:
+    name: steam
+    question: steam/question
+    value: 'I AGREE'
+    vtype: select
+  tags:
+    - setup
+    - packages
+
+- name: Pré-acceptation de la licence Steam pour steamcmd (notice)
+  ansible.builtin.debconf:
+    name: steam
+    question: steam/license
+    value: ''
+    vtype: note
+  tags:
+    - setup
+    - packages
+
+- name: Installation des dépendances SteamCMD et Satisfactory
+  ansible.builtin.apt:
+    name:
+      - acl                # Requis par Ansible pour become_user vers un utilisateur non-privilégié
+      - steamcmd           # Client Steam en ligne de commande
+      - libsdl2-2.0-0:i386 # Requis par FactoryServer.sh (SDL Priority Manager)
+    state: present
+  tags:
+    - setup
+    - packages
+
+- name: Création du répertoire serveur
+  ansible.builtin.file:
+    path: '{{ satisfactory_server_dir }}'
+    state: directory
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+# Répertoire de données hors du home (pattern identique à Vintage Story / Minecraft)
+# Préservé lors du cleanup de l'utilisateur satisfactory
+- name: Création du répertoire de données Satisfactory
+  ansible.builtin.file:
+    path: '{{ satisfactory_data_dir }}'
+    state: directory
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+# Satisfactory écrit dans ~/.config/Epic/FactoryGame/Saved — on le redirige vers satisfactory_data_dir
+# Le lien doit exister avant le premier démarrage pour que ProtectHome=read-only fonctionne
+- name: Création de l'arborescence ~/.config/Epic/FactoryGame
+  ansible.builtin.file:
+    path: '{{ satisfactory_home }}/.config/Epic/FactoryGame'
+    state: directory
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+- name: Création du lien symbolique Saved -> satisfactory_data_dir
+  ansible.builtin.file:
+    src: '{{ satisfactory_data_dir }}'
+    dest: '{{ satisfactory_home }}/.config/Epic/FactoryGame/Saved'
+    state: link
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+  tags:
+    - setup
+    - directories
+
+- name: Création du répertoire .steam/sdk64 pour steamclient.so
+  ansible.builtin.file:
+    path: '{{ satisfactory_home }}/.steam/sdk64'
+    state: directory
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0755'
+  tags:
+    - setup
+    - directories
+
+- name: Vérification de l'installation du serveur Satisfactory
+  ansible.builtin.stat:
+    path: '{{ satisfactory_server_dir }}/FactoryServer.sh'
+  register: satisfactory_server_stat
+  tags:
+    - server
+    - download
+
+# steamcmd télécharge aussi son propre runtime (dont steamclient.so) lors de cette étape.
+# Sur Debian (paquet apt), steamcmd se redémarre une fois après bootstrap — au redémarrage
+# les configs Steam ne sont pas encore en cache : "Missing configuration" (rc=8).
+# La deuxième tentative fonctionne systématiquement, d'où les 3 retries.
+- name: Téléchargement du serveur Satisfactory via SteamCMD
+  ansible.builtin.command:
+    cmd: >
+      /usr/games/steamcmd
+      +force_install_dir {{ satisfactory_server_dir }}
+      +login anonymous
+      +app_update {{ satisfactory_steam_app_id }} validate
+      +quit
+  become: true
+  become_user: '{{ satisfactory_user }}'
+  when: not satisfactory_server_stat.stat.exists
+  register: satisfactory_steamcmd_download
+  retries: 3
+  delay: 15
+  until: satisfactory_steamcmd_download.rc == 0
+  tags:
+    - server
+    - download
+
+# steamclient.so est créé par steamcmd lors du téléchargement ci-dessus.
+# Sur Debian (apt), le fichier se trouve dans ~/.steam/debian-installation/linux64/
+# ou un chemin équivalent. On le localise dynamiquement pour éviter de coder en dur un chemin
+# qui varie selon la version du paquet Debian.
+- name: Recherche du fichier steamclient.so créé par steamcmd
+  ansible.builtin.find:
+    paths: '{{ satisfactory_home }}/.steam'
+    patterns: 'steamclient.so'
+    recurse: true
+    excludes: 'sdk64'
+  become: true
+  become_user: '{{ satisfactory_user }}'
+  register: satisfactory_steamclient_so
+  tags:
+    - server
+    - dependencies
+
+- name: Création du lien symbolique steamclient.so
+  ansible.builtin.file:
+    src: '{{ satisfactory_steamclient_so.files[0].path }}'
+    dest: '{{ satisfactory_home }}/.steam/sdk64/steamclient.so'
+    state: link
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    force: true
+  when: satisfactory_steamclient_so.matched > 0
+  tags:
+    - server
+    - dependencies
+
+- name: Configuration du pare-feu pour Satisfactory — port jeu UDP
+  community.general.ufw:
+    rule: allow
+    port: '{{ satisfactory_game_port }}'
+    proto: udp
+    comment: Satisfactory Server UDP (jeu)
+  tags:
+    - server
+    - firewall
+
+- name: Configuration du pare-feu pour Satisfactory — port jeu TCP
+  community.general.ufw:
+    rule: allow
+    port: '{{ satisfactory_game_port }}'
+    proto: tcp
+    comment: Satisfactory Server TCP (HTTPS API)
+  tags:
+    - server
+    - firewall
+
+# Port obligatoire depuis le Patch 1.1 pour le reliable messaging
+# Sans ce port, les joueurs restent bloqués sur l'écran de chargement
+- name: Configuration du pare-feu pour Satisfactory — reliable port TCP
+  community.general.ufw:
+    rule: allow
+    port: '{{ satisfactory_reliable_port }}'
+    proto: tcp
+    comment: Satisfactory Server TCP (reliable messaging)
+  tags:
+    - server
+    - firewall
+
+- name: Création du service systemd
+  ansible.builtin.template:
+    src: satisfactory.service.j2
+    dest: /etc/systemd/system/satisfactory.service
+    mode: '0644'
+  notify: Rechargement de systemd
+  tags:
+    - server
+    - service
+
+- name: Configuration sudo pour permettre à satisfactory de gérer son service
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/satisfactory
+    mode: '0440'
+    owner: root
+    group: root
+    content: |
+      # Permet à l'utilisateur satisfactory de gérer son propre service
+      {{ satisfactory_user }} ALL=(ALL) NOPASSWD: /bin/systemctl start satisfactory, /bin/systemctl stop satisfactory, /bin/systemctl restart satisfactory, /bin/systemctl status satisfactory, /bin/systemctl reload satisfactory, /bin/journalctl -u satisfactory *
+    validate: visudo -cf %s
+  tags:
+    - server
+    - service
+
+- name: Ajout des alias de gestion du serveur dans .bashrc
+  ansible.builtin.blockinfile:
+    path: '{{ satisfactory_home }}/.bashrc'
+    owner: '{{ satisfactory_user }}'
+    group: '{{ satisfactory_user }}'
+    mode: '0644'
+    create: true
+    block: |
+      # Variables d'environnement
+      export GAME_DATA_DIR='{{ satisfactory_data_dir }}'
+
+      # Alias pour la gestion du serveur Satisfactory
+      alias server-restart='sudo systemctl restart satisfactory'
+      alias server-status='sudo systemctl status satisfactory'
+      alias server-stop='sudo systemctl stop satisfactory'
+      alias server-start='sudo systemctl start satisfactory'
+      alias server-logs='sudo journalctl -u satisfactory -f'
+
+      # Mise à jour du serveur : stop → steamcmd update (avec retry) → start
+      server-update() {
+        echo "==> Arrêt du serveur..."
+        sudo systemctl stop satisfactory
+
+        echo "==> Mise à jour via SteamCMD..."
+        local success=0
+        for i in 1 2 3; do
+          /usr/games/steamcmd \
+            +force_install_dir {{ satisfactory_server_dir }} \
+            +login anonymous \
+            +app_update {{ satisfactory_steam_app_id }} validate \
+            +quit && success=1 && break
+          echo "    Tentative $i échouée (Missing configuration connu), nouvelle tentative dans 15s..."
+          sleep 15
+        done
+
+        if [ "$success" -eq 1 ]; then
+          echo "==> Mise à jour terminée. Démarrage du serveur..."
+          sudo systemctl start satisfactory
+        else
+          echo "==> Echec de la mise à jour après 3 tentatives. Le serveur n'a pas été redémarré."
+        fi
+      }
+    marker: '# {mark} ANSIBLE MANAGED BLOCK - Satisfactory Server'
+  tags:
+    - server
+    - service
+
+- name: Configuration du démarrage automatique du serveur
+  ansible.builtin.cron:
+    name: '{{ item.name }}'
+    minute: '{{ item.minute }}'
+    hour: '{{ item.hour }}'
+    day: '*'
+    month: '*'
+    weekday: '{{ item.weekday }}'
+    user: '{{ satisfactory_user }}'
+    job: '{{ item.job }}'
+  loop:
+    - name: Démarrage serveur Satisfactory - Semaine à 17h
+      minute: '0'
+      hour: '17'
+      weekday: 1-5
+      job: sudo /bin/systemctl start satisfactory
+    - name: Démarrage serveur Satisfactory - Weekend à 8h
+      minute: '0'
+      hour: '8'
+      weekday: 6,0
+      job: sudo /bin/systemctl start satisfactory
+    - name: Arrêt serveur Satisfactory - Tous les jours à 4h
+      minute: '0'
+      hour: '4'
+      weekday: '*'
+      job: sudo /bin/systemctl stop satisfactory
+  tags:
+    - server
+    - cron

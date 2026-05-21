@@ -1,0 +1,25 @@
+---
+# Variables par défaut pour le rôle satisfactory
+# Toutes les variables sont préfixées par satisfactory_ pour la conformité Ansible Lint
+
+# Utilisateur système
+satisfactory_user: satisfactory
+satisfactory_home: /home/{{ satisfactory_user }}
+satisfactory_server_dir: '{{ satisfactory_home }}/server'
+
+# Répertoire des sauvegardes (hors du home, préservé lors du cleanup de l'utilisateur)
+# Satisfactory y accède via un lien symbolique : ~/.config/Epic/FactoryGame/Saved -> satisfactory_data_dir
+satisfactory_data_dir: /var/games/satisfactory/data
+
+# Ports réseau (Patch 1.1+)
+# Le port 7777 est obligatoire (TCP + UDP) pour le trafic de jeu et l'API HTTPS
+# Le port 8888 est obligatoire (TCP) depuis le Patch 1.1 - sans lui les joueurs restent
+# bloqués indéfiniment sur l'écran de chargement
+satisfactory_game_port: 7777
+satisfactory_reliable_port: 8888
+
+# Steam App ID du serveur dédié Satisfactory (login anonyme supporté)
+satisfactory_steam_app_id: 1690800
+
+# Limite mémoire systemd — laisse ~2 Go pour l'OS sur un VPS 12 Go
+satisfactory_memory_max: 10G

@@ -1,0 +1,11 @@
+---
+# Variables par défaut pour le rôle satisfactory_cleanup
+# Toutes les variables sont préfixées par satisfactory_cleanup_ pour la conformité Ansible Lint
+
+satisfactory_cleanup_user: satisfactory
+satisfactory_cleanup_home: /home/{{ satisfactory_cleanup_user }}
+satisfactory_cleanup_server_dir: '{{ satisfactory_cleanup_home }}/server'
+satisfactory_cleanup_data_dir: /var/games/satisfactory/data
+satisfactory_cleanup_game_port: '{{ satisfactory_game_port | default(7777) }}'
+satisfactory_cleanup_reliable_port: '{{ satisfactory_reliable_port | default(8888) }}'
+satisfactory_cleanup_remove_packages: false

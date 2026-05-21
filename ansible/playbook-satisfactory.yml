@@ -1,0 +1,35 @@
+---
+# Prérequis : Fichier de variables sensibles ansible/vars/production.yml
+#
+# Commande pour exécuter le playbook
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml
+#
+# Simulation complète sans modifications
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --check
+#
+# Avec plus de détails sur ce qui serait changé
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --check --diff
+#
+# === EXÉCUTION PARTIELLE ===
+# Tags disponibles : setup, user, ssh, dependencies, packages, directories, server, download, firewall, scripts, service, cron
+#
+# Installer seulement les dépendances :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --tags "setup"
+#
+# Installer seulement le serveur Satisfactory :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --tags "server"
+#
+# Installer seulement le serveur Satisfactory sans le service :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --tags "server" --skip-tags "service"
+#
+# Seulement firewall et service :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --tags "firewall,service"
+#
+# Lister toutes les tâches avec leurs tags :
+# ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-satisfactory.yml --list-tags
+#
+- name: Installation et configuration de Satisfactory
+  hosts: satisfactory
+  become: true
+  roles:
+    - satisfactory

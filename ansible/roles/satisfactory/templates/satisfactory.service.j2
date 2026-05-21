@@ -1,0 +1,38 @@
+[Unit]
+Description=Satisfactory Server
+Wants=network-online.target
+After=syslog.target network.target nss-lookup.target network-online.target
+
+[Service]
+Type=simple
+User={{ satisfactory_user }}
+Group={{ satisfactory_user }}
+WorkingDirectory={{ satisfactory_server_dir }}
+
+ExecStart={{ satisfactory_server_dir }}/FactoryServer.sh \
+  -Port={{ satisfactory_game_port }} \
+  -ReliablePort={{ satisfactory_reliable_port }}
+
+# SIGINT pour un arrêt gracieux (SIGTERM tuerait le processus instantanément)
+KillSignal=SIGINT
+# Laisse le temps au serveur de finaliser les écritures disque
+TimeoutStopSec=120
+# Redémarrage automatique en cas de crash (60s de délai pour éviter les boucles)
+Restart=on-failure
+RestartSec=60
+
+# Limites système
+LimitNOFILE=65536
+MemoryMax={{ satisfactory_memory_max }}
+
+# Sécurité
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+# Les données sont dans /var/games/satisfactory/data (hors home), accessible via symlink depuis
+# ~/.config/Epic/FactoryGame/Saved. ReadWritePaths couvre les deux répertoires d'écriture.
+ReadWritePaths={{ satisfactory_data_dir }} {{ satisfactory_server_dir }}
+
+[Install]
+WantedBy=multi-user.target
