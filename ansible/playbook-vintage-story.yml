@@ -11,7 +11,7 @@
 # ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --check --diff
 #
 # === EXÉCUTION PARTIELLE ===
-# Tags disponibles : setup, user, dependencies, packages, directories, server, download, install, config, firewall, scripts, service, cleanup
+# Tags disponibles : setup, user, ssh, dependencies, packages, directories, server, download, firewall, scripts, service, cron
 #
 # Installer seulement les dépendances :
 # ansible-playbook --extra-vars @ansible/vars/production.yml -i ansible/inventory.yml ansible/playbook-vintage-story.yml --tags "setup"

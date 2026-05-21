@@ -82,7 +82,6 @@
     marker: '# {mark} ANSIBLE MANAGED BLOCK - General Aliases'
   tags:
     - setup
-    - config
 
 - name: Téléchargement de la clé GPG pour Microsoft
   ansible.builtin.get_url:
@@ -198,7 +197,6 @@
     mode: '0644'
   tags:
     - server
-    - config
 
 - name: Génération du fichier de configuration principal du serveur
   ansible.builtin.template:
@@ -210,7 +208,6 @@
     backup: true
   tags:
     - server
-    - config
 
 - name: Configuration du pare-feu pour Vintage Story (UDP)
   community.general.ufw:
@@ -220,7 +217,6 @@
     comment: Vintage Story Server UDP
   tags:
     - server
-    - config
     - firewall
 
 - name: Configuration du pare-feu pour Vintage Story (TCP)
@@ -231,7 +227,6 @@
     comment: Vintage Story Server TCP
   tags:
     - server
-    - config
     - firewall
 
 - name: Configuration du script server.sh officiel
@@ -242,7 +237,6 @@
     backup: true
   tags:
     - server
-    - config
     - scripts
 
 - name: Configuration du chemin dans server.sh
@@ -253,7 +247,6 @@
     backup: true
   tags:
     - server
-    - config
     - scripts
 
 - name: Configuration du chemin de données dans server.sh
@@ -264,7 +257,6 @@
     backup: true
   tags:
     - server
-    - config
     - scripts
 
 - name: Sauvegarde du fichier de configuration runtime .NET original
@@ -278,7 +270,6 @@
     force: false # Ne pas écraser si la sauvegarde existe déjà
   tags:
     - server
-    - config
     - scripts
 
 - name: Création du fichier de configuration runtime .NET
@@ -291,7 +282,6 @@
     backup: true
   tags:
     - server
-    - config
     - scripts
 
 - name: Création du service systemd
@@ -302,7 +292,6 @@
   notify: Rechargement de systemd
   tags:
     - server
-    - config
     - service
 
 - name: Configuration sudo pour permettre à vintagestory de gérer son service
@@ -317,7 +306,6 @@
     validate: visudo -cf %s
   tags:
     - server
-    - config
     - service
 
 - name: Ajout des alias de gestion du serveur dans .bashrc
@@ -341,7 +329,6 @@
     marker: '# {mark} ANSIBLE MANAGED BLOCK - Vintage Story Server'
   tags:
     - server
-    - config
     - service
 
 - name: Configuration du démarrage automatique du serveur
@@ -352,25 +339,24 @@
     day: '*'
     month: '*'
     weekday: '{{ item.weekday }}'
-    user: root
+    user: '{{ vintage_story_user }}'
     job: '{{ item.job }}'
   loop:
     - name: Démarrage serveur Vintage Story - Semaine à 17h
       minute: '0'
       hour: '17'
       weekday: 1-5
-      job: /bin/systemctl start vintage-story
+      job: sudo /bin/systemctl start vintage-story
     - name: Démarrage serveur Vintage Story - Weekend à 8h
       minute: '0'
       hour: '8'
       weekday: 6,0
-      job: /bin/systemctl start vintage-story
+      job: sudo /bin/systemctl start vintage-story
     - name: Arrêt serveur Vintage Story - Tous les jours à 3h
       minute: '0'
       hour: '3'
       weekday: '*'
-      job: /bin/systemctl stop vintage-story
+      job: sudo /bin/systemctl stop vintage-story
   tags:
     - server
-    - config
     - cron

@@ -32,13 +32,14 @@
   ansible.builtin.cron:
     name: '{{ item }}'
     state: absent
+    user: '{{ vintage_story_cleanup_user }}'
   loop:
     - Démarrage serveur Vintage Story - Semaine à 17h
     - Démarrage serveur Vintage Story - Weekend à 8h
     - Arrêt serveur Vintage Story - Tous les jours à 3h
   tags:
     - cleanup
-    - maintenance
+    - cron
 
 - name: Suppression de la règle firewall (UDP)
   community.general.ufw:
@@ -68,7 +69,9 @@
     state: absent
   tags:
     - cleanup
-    - files
+    - server
+    - directories
+    - download
 
 - name: Suppression de l'utilisateur Vintage Story
   ansible.builtin.user:
@@ -79,6 +82,7 @@
   tags:
     - cleanup
     - user
+    - ssh
 
 - name: Suppression des packages .NET (optionnel)
   ansible.builtin.apt:
@@ -101,6 +105,7 @@
   tags:
     - cleanup
     - packages
+    - dependencies
     - optional
 
 - name: Suppression de la clé GPG Microsoft (optionnel)
@@ -111,6 +116,7 @@
   tags:
     - cleanup
     - packages
+    - dependencies
     - optional
 
 - name: Nettoyage des fichiers temporaires
