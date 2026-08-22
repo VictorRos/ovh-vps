@@ -3,9 +3,9 @@
 collections:
   - name: community.general
     # https://galaxy.ansible.com/ui/repo/published/community/general/
-    version: 12.2.0
+    version: 13.3.0
     source: https://galaxy.ansible.com
   - name: ansible.posix
     # https://galaxy.ansible.com/ui/repo/published/ansible/posix/
-    version: 2.1.0
+    version: 2.2.2
     source: https://galaxy.ansible.com
