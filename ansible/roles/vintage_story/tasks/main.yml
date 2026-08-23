@@ -112,14 +112,24 @@
     - setup
     - dependencies
 
-- name: Installation des dépendances et runtime .NET 8
+- name: Installation des dépendances et runtime .NET 10
   ansible.builtin.apt:
     name:
-      - dotnet-runtime-8.0 # Runtime .NET 8 pour Vintage Story
+      - dotnet-runtime-10.0 # Runtime .NET 10 pour Vintage Story
       - libopenal-dev # OpenAL pour le son
       - screen
       - unzip
     state: present
+  tags:
+    - setup
+    - packages
+
+- name: Suppression des packages .NET 8
+  ansible.builtin.apt:
+    name:
+      - dotnet-runtime-8.0
+    state: absent
+    autoremove: true
   tags:
     - setup
     - packages

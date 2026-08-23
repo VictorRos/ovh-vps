@@ -87,7 +87,7 @@
 - name: Suppression des packages .NET (optionnel)
   ansible.builtin.apt:
     name:
-      - dotnet-runtime-8.0
+      - dotnet-runtime-10.0
       - libopenal-dev
     state: absent
     autoremove: true
